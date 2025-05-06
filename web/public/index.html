@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 BLE RC Controller</title>
+    <link rel="stylesheet" href="styles/app.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>ESP32 BLE RC Controller</h1>
+
+        <div id="statusText" class="status disconnected">
+            Disconnected
+        </div>
+
+        <button id="connectBtn">Connect to ESP32</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+
+        <div class="controls">
+            <h2>RC-Style Controls</h2>
+            <p>Left stick controls forward/backward, right stick controls left/right</p>
+
+            <div class="visual-indicator">
+                <div class="indicator-crosshair"></div>
+                <div id="indicatorDot" class="indicator-dot"></div>
+            </div>
+
+            <div class="sliders-row">
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <div class="slider-value" id="yValue">0</div>
+                    </div>
+                    <input type="range" min="-100" max="100" value="0" class="slider vertical" id="ySlider">
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <div class="slider-value" id="xValue">90</div>
+                    </div>
+                    <input type="range" min="45" max="135" value="90" class="slider horizontal" id="xSlider">
+                </div>
+            </div>
+
+            <button id="resetBoth">Reset Both Sticks</button>
+
+            <div class="control-info">
+                <p><small>Values are sent continuously as you move the sliders. Sliders return to center (0) when
+                        released.</small></p>
+            </div>
+        </div>
+
+        <div class="log">
+            <h3>Event Log</h3>
+            <div id="logContent"></div>
+        </div>
+    </div>
+
+    <script src="javascripts/app.js"></script>
+</body>
+
+</html>
