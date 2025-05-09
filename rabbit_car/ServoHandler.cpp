@@ -12,7 +12,7 @@ Servo steeringServo;
 
 void setupServo()
 {
-  Serial.begin(115200);
+  pinMode(SERVO_PIN, OUTPUT);
 
   // Allow allocation of timers 2, 3 for servo control
   ESP32PWM::allocateTimer(2);
@@ -23,7 +23,7 @@ void setupServo()
   steeringServo.attach(SERVO_PIN, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
 
   // Set to neutral position on startup
-  steeringServo.writeMicroseconds(SERVO_MID_PULSE_WIDTH);
+  centerSteering();
   delay(500); // Give the servo time to initialize
 
   Serial.println("Steering servo initialized. Ready to receive steering commands.");
@@ -76,5 +76,4 @@ int setSteering(int steeringValue)
 void centerSteering()
 {
   steeringServo.writeMicroseconds(SERVO_MID_PULSE_WIDTH); // Set to center
-  Serial.println("Steering centered. Pulse set to neutral.");
 }

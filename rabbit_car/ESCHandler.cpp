@@ -12,7 +12,7 @@ Servo ESC;
 
 void setupESC()
 {
-  Serial.begin(115200);
+  pinMode(ESC_PIN, OUTPUT);
 
   // Allow allocation of timers 0,1 for ESC control
   ESP32PWM::allocateTimer(0);
@@ -64,7 +64,7 @@ int setMotorSpeed(int speedValue)
   ESC.writeMicroseconds(pulseWidth);
 
   // Log the command (optional)
-  Serial.print("Speed value (alt): ");
+  Serial.print("Speed value: ");
   Serial.print(speedValue);
   Serial.print(" | Pulse width: ");
   Serial.println(pulseWidth);
@@ -75,5 +75,4 @@ int setMotorSpeed(int speedValue)
 void stopESC()
 {
   ESC.writeMicroseconds(ESC_MID_PULSE_WIDTH); // Set to neutral position
-  Serial.println("ESC stopped. Pulse set to neutral.");
 }

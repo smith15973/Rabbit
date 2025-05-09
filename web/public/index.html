@@ -19,7 +19,16 @@
         <button id="connectBtn">Connect to ESP32</button>
         <button id="disconnectBtn" disabled>Disconnect</button>
 
-        <div class="controls">
+        <div class="controls" id="pacerDiv">
+            <input type="number" name="distanceInput" id="distanceInput" placeholder="Enter Distance">
+            <input type="number" name="timeInput" id="timeInput" placeholder="Enter Time">
+            <input type="number" name="speedInput" id="speedInput" placeholder="Enter Speed">
+            <div id="currentTime">0.00</div>
+            <button id="startToggleButton">Go</button>
+
+        </div>
+
+        <div class="controls" id="controlsDiv">
             <h2>RC-Style Controls</h2>
             <p>Left stick controls forward/backward, right stick controls left/right</p>
 
@@ -44,13 +53,15 @@
                 </div>
             </div>
 
-            <button id="resetBoth">Reset Both Sticks</button>
+            
 
             <div class="control-info">
                 <p><small>Values are sent continuously as you move the sliders. Sliders return to center (0) when
                         released.</small></p>
             </div>
         </div>
+
+        <button id="manualToggle">Switch to Manual Control</button>
 
         <div class="log">
             <h3>Event Log</h3>

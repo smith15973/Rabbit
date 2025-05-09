@@ -9,7 +9,10 @@
 #include "ESCHandler.h"
 
 void setupBLE();
-void parseDrivingData(String input, int* x, int* y);
+void parseDrivingData(String, int*, int*);
+void parseManualControl(String, bool*);
+void parseRunning(String, bool*);
+String parseDataType(String);
 void initializeESCOnConnect();
 void stopESCOnDisconnect();
 
