@@ -23,13 +23,14 @@ let characteristic = null;
 let manualControl = false;
 let running = false;
 
-// Throttle variables
-const throttleInterval = 50; // Adjusted to 50ms
-let writeQueue = [];
-let isWriting = false;
-let sendInterval = null;
-let currentX = 0;
+// Command and movement tracking
+let currentX = 90;
 let currentY = 0;
+let pendingOperation = false;  // Tracks if any command is in flight
+let movementRequested = false;
+let lastSentX = null;
+let lastSentY = null;
+let commandQueue = [];  // Queue for critical commands
 
 // Log function
 function log(message) {
@@ -59,7 +60,12 @@ async function connect() {
         connectBtn.disabled = true;
         disconnectBtn.disabled = false;
         log('Connected successfully!');
-        startContinuousSending();
+        
+        // Reset command state
+        pendingOperation = false;
+        commandQueue = [];
+        lastSentX = null;
+        lastSentY = null;
     } catch (error) {
         log(`Error: ${error}`);
         disconnect();
@@ -69,7 +75,6 @@ async function connect() {
 // Handle disconnection
 function onDisconnected() {
     log('Device disconnected');
-    stopContinuousSending();
     statusText.textContent = 'Disconnected';
     statusText.className = 'status disconnected';
     connectBtn.disabled = false;
@@ -78,16 +83,26 @@ function onDisconnected() {
     server = null;
     service = null;
     characteristic = null;
-    writeQueue = []; // Clear queue
-    isWriting = false;
+    pendingOperation = false;
+    commandQueue = [];
 }
 
 // Disconnect from device
 async function disconnect() {
     if (device && device.gatt.connected) {
         try {
-            await sendValues(`running$ running:false`, true);
-            log('Sent stop command before disconnect');
+            // Clear any pending commands and immediately stop
+            pendingOperation = false;
+            commandQueue = [];
+            
+            // Send stop command directly (bypass queue for disconnect)
+            if (characteristic) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(`running$ running:false`);
+                await characteristic.writeValue(data);
+                log('Sent stop command before disconnect');
+            }
+            
             await new Promise(resolve => setTimeout(resolve, 100));
             device.gatt.disconnect();
         } catch (error) {
@@ -99,58 +114,93 @@ async function disconnect() {
     }
 }
 
-// Send values to ESP32 with queuing
-async function sendValues(valueString, isCritical = false) {
+// Send critical commands (like mode changes)
+async function sendCommand(valueString, isCritical = true) {
     if (!characteristic) {
         log('Error: No characteristic available');
-        return;
+        return false;
     }
-    writeQueue[isCritical ? 'unshift' : 'push']({ valueString, isCritical });
-    if (!isWriting) {
-        processWriteQueue();
+    
+    if (isCritical) {
+        // Critical commands go to the front of the queue
+        queueCriticalCommand(valueString);
+        return true;
+    } else {
+        // For non-critical commands (though we typically make all commands critical)
+        try {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(valueString);
+            await characteristic.writeValue(data);
+            log(`Sent command: ${valueString}`);
+            return true;
+        } catch (error) {
+            log(`Error sending command: ${error}`);
+            return false;
+        }
     }
 }
 
-// Process the write queue
-async function processWriteQueue() {
-    if (writeQueue.length === 0 || !characteristic) {
-        isWriting = false;
-        return;
-    }
-    isWriting = true;
-    const { valueString, isCritical } = writeQueue.shift();
+// Process command queue and movement updates with priority handling
+async function processCommandQueue() {
+    if (!characteristic || pendingOperation) return;
+    
+    pendingOperation = true;
+    
     try {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(valueString);
-        await characteristic.writeValue(data);
-        log(`Sent ${isCritical ? 'critical ' : ''}values: ${valueString}`);
+        // Process critical commands first
+        if (commandQueue.length > 0) {
+            const command = commandQueue.shift();
+            const encoder = new TextEncoder();
+            const data = encoder.encode(command.valueString);
+            
+            await characteristic.writeValue(data);
+            log(`Sent critical command: ${command.valueString}`);
+            
+            // If this was a manual control toggle, reset movement tracking
+            if (command.valueString.includes('manualControl$')) {
+                lastSentX = null;
+                lastSentY = null;
+            }
+        }
+        // Then process movement if no commands and movement is needed
+        else if (manualControl && 
+                (lastSentX !== currentX || lastSentY !== currentY || movementRequested)) {
+            
+            movementRequested = false;
+            const valueString = `movement$ X:${currentX},Y:${currentY}`;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(valueString);
+            
+            const response = await characteristic.writeValue(data);
+            console.log(response);
+            lastSentX = currentX;
+            lastSentY = currentY;
+            log(`Sent movement: X:${currentX}, Y:${currentY}`);
+        }
     } catch (error) {
         log(`Error sending data: ${error}`);
-        if (isCritical) {
-            log(`Retrying critical command: ${valueString}`);
-            writeQueue.unshift({ valueString, isCritical });
-        }
     } finally {
-        isWriting = false;
-        processWriteQueue();
+        pendingOperation = false;
+        
+        // Check if we need to send more commands
+        if (commandQueue.length > 0 || 
+            (manualControl && (lastSentX !== currentX || lastSentY !== currentY || movementRequested))) {
+            // Schedule next operation after a small delay
+            setTimeout(processCommandQueue, 10);
+        }
     }
 }
 
-// Start continuous sending
-function startContinuousSending() {
-    if (sendInterval) return;
-    sendInterval = setInterval(() => {
-    }, throttleInterval);
-    log('Started continuous sending');
+// Add a critical command to the queue
+function queueCriticalCommand(valueString) {
+    commandQueue.push({ valueString });
+    processCommandQueue();
 }
 
-// Stop continuous sending
-function stopContinuousSending() {
-    if (sendInterval) {
-        clearInterval(sendInterval);
-        sendInterval = null;
-        log('Stopped continuous sending');
-    }
+// Request movement update (called by UI events)
+function requestMovementUpdate() {
+    movementRequested = true;
+    processCommandQueue();
 }
 
 // Update visual indicator
@@ -167,9 +217,7 @@ function resetXAxis() {
     currentX = 90;
     xValue.textContent = '90';
     updateIndicator();
-    if (characteristic) {
-        sendValues(`movement$ X:${currentX},Y:${currentY}`);
-    }
+    requestMovementUpdate();
 }
 
 // Reset Y axis
@@ -178,51 +226,53 @@ function resetYAxis() {
     currentY = 0;
     yValue.textContent = '0';
     updateIndicator();
-    if (characteristic) {
-        sendValues(`movement$ X:${currentX},Y:${currentY}`);
-    }
+    requestMovementUpdate();
 }
 
 // Event listeners
 connectBtn.addEventListener('click', connect);
 disconnectBtn.addEventListener('click', disconnect);
 
-xSlider.addEventListener('input', function () {
+xSlider.addEventListener('input', function() {
     currentX = parseInt(this.value);
     xValue.textContent = currentX;
     updateIndicator();
+    requestMovementUpdate();
 });
 
-ySlider.addEventListener('input', function () {
+ySlider.addEventListener('input', function() {
     currentY = parseInt(this.value);
     yValue.textContent = currentY;
     updateIndicator();
+    requestMovementUpdate();
 });
 
-// xSlider.addEventListener('mouseup', resetXAxis);
-// xSlider.addEventListener('touchend', resetXAxis);
-// ySlider.addEventListener('mouseup', resetYAxis);
-// ySlider.addEventListener('touchend', resetYAxis);
+xSlider.addEventListener('mouseup', resetXAxis);
+xSlider.addEventListener('touchend', resetXAxis);
+ySlider.addEventListener('mouseup', resetYAxis);
+ySlider.addEventListener('touchend', resetYAxis);
 
-manualToggle.addEventListener('click', function () {
+manualToggle.addEventListener('click', function() {
     try {
         manualControl = !manualControl;
         manualToggle.innerText = manualControl ? "Switch to Pacer" : "Switch to Manual Control";
-        sendValues(`manualControl$ manual:${manualControl}`); // Mark as critical
-        log(`Manual Control set to ${manualControl}`);
-        // document.getElementById('controlsDiv').style.display = manualControl ? 'flex' : 'none';
-        // document.getElementById('pacerDiv').style.display = manualControl ? 'none' : 'flex';
+        sendCommand(`manualControl$ manual:${manualControl}`, true);
+        log(`Manual Control mode change requested: ${manualControl}`);
+        if (manualControl) {
+            // Queue an immediate position update after mode change
+            movementRequested = true;
+        }
     } catch (error) {
         log(`Error toggling manual control: ${error}`);
     }
 });
 
-startToggleButton.addEventListener('click', function () {
+startToggleButton.addEventListener('click', function() {
     try {
         running = !running;
         startToggleButton.innerText = running ? "STOP" : "GO";
-        sendValues(`running$ running:${running}`, true); // Start/Stop is critical
-        log(`Running set to ${running}`);
+        sendCommand(`running$ running:${running}`, true);
+        log(`Running state change requested: ${running}`);
     } catch (error) {
         log(`Error toggling running state: ${error}`);
     }

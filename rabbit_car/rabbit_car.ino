@@ -57,6 +57,7 @@ void loop()
     else
     {
       stopESC();
+      centerSteering();
     }
   }
   

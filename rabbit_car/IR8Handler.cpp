@@ -133,21 +133,39 @@ void steer() {
         Serial.println("ACTION: TURN RIGHT SHARP - Line lost, last position right");
       }
     } else {
-      // Line is detected, calculate proportional steering
-      // Map error (-3500 to 3500) to steering angle (45 to 135)
-      float gain = 0.025; // Adjust this for steering sensitivity (tune as needed)
-      steeringAngle = 90 + (error * gain); // Center at 90, adjust based on error
+      // Use non-linear gain for better control
+      // For small errors: gentle correction
+      // For large errors: more aggressive correction
+      
+      float gain;
+      int absError = abs(error);
+      
+      if (absError < 1000) {
+        // Small error - gentle steering
+        gain = 0.01;
+      } else if (absError < 2500) {
+        // Medium error - moderate steering
+        gain = 0.02;
+      } else {
+        // Large error - aggressive steering
+        gain = 0.03;
+      }
+      
+      // Calculate steering angle
+      steeringAngle = 90 + (error * gain);
   
       // Debug output
       Serial.print("ACTION: STEER - Error: ");
       Serial.print(error);
+      Serial.print(" | Gain: ");
+      Serial.print(gain, 3);
       Serial.print(" | Angle: ");
       Serial.println(steeringAngle);
     }
   
     // Set the servo value
     SERVO_VALUE = steeringAngle;
-  }
+}
 
 void printIR8DebugInfo() {
   // Print sensor values
