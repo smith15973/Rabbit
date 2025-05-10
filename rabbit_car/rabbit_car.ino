@@ -3,6 +3,7 @@
 #include "ESCHandler.h"
 #include "ServoHandler.h"
 #include "HSHandler.h"
+#include "IR8Handler.h"
 #include "config.h"
 
 // Define direction variables
@@ -11,10 +12,12 @@ int SERVO_VALUE = 90;
 bool RUNNING = false;
 
 bool manualControl = false;
-float targetSpeed = 5.3;   // target average speed in m/s
-float averageSpeed = 0.0;  // average speed for the current run
-float currentSpeed = 0.0;  // Current speed in km/h
-float totalDistance = 0.0; // Total distance in m
+bool IS_WHITE_LINE = false; // determines whenther the logic follows a white or black line
+float targetSpeed = 5.3;    // target average speed in m/s
+float averageSpeed = 0.0;   // average speed for the current run
+float currentSpeed = 0.0;   // Current speed in km/h
+float totalDistance = 0.0;  // Total distance in m
+
 
 void setup()
 {
@@ -29,6 +32,8 @@ void setup()
   setupServo();
   // Initialize HS
   setupHS();
+  // Initialize IR8 line sensor
+  ir8Setup();
   // Initialize BLE
   setupBLE();
 }
@@ -40,20 +45,21 @@ void loop()
     setMotorSpeed(ESC_VALUE);
     setSteering(SERVO_VALUE);
   }
-  else
+
+  else // follow the line
   {
     if (RUNNING)
     {
-      setMotorSpeed(ESC_VALUE);
-      // delay(2000);
-      // RUNNING = false;
+      // setMotorSpeed(23);
+      followLine();
+      setSteering(SERVO_VALUE);
     }
     else
     {
       stopESC();
     }
   }
-
+  
 
   // hsUpdate(&currentSpeed, &totalDistance);
 
