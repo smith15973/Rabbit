@@ -142,13 +142,13 @@ void steer() {
       
       if (absError < 1000) {
         // Small error - gentle steering
-        gain = 0.01;
+        gain = 0.03;
       } else if (absError < 2500) {
         // Medium error - moderate steering
         gain = 0.02;
       } else {
         // Large error - aggressive steering
-        gain = 0.03;
+        gain = 0.01;
       }
       
       // Calculate steering angle

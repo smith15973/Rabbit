@@ -12,6 +12,7 @@ void setupBLE();
 void parseDrivingData(String, int*, int*);
 void parseManualControl(String, bool*);
 void parseRunning(String, bool*);
+void parseIsWhiteLine(String input, bool *isWhiteLine);
 String parseDataType(String);
 void initializeESCOnConnect();
 void stopESCOnDisconnect();

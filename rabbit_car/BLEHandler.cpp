@@ -36,6 +36,8 @@ class MyCallbacks : public BLECharacteristicCallbacks
         parseManualControl(value, &manualControl);
       } else if (dataType == "running") {
         parseRunning(value, &RUNNING);
+      } else if (dataType == "isWhiteLine") {
+        parseIsWhiteLine(value, &IS_WHITE_LINE);
       }
     }
   }
@@ -114,6 +116,22 @@ void parseRunning(String input, bool *running) {
   {
     String mode = input.substring(keyIndex + 8); // to the end of the string
     *running =  mode == "true" ? true : false;
+  }
+  else
+  {
+    Serial.println("Invalid input format");
+  }
+}
+
+void parseIsWhiteLine(String input, bool *isWhiteLine) {
+  int keyIndex = input.indexOf("isWhiteLine:");
+
+  if (keyIndex != -1)
+  {
+    String mode = input.substring(keyIndex + 12); // to the end of the string
+    *isWhiteLine =  mode == "true" ? true : false;
+    Serial.print("White line set to: ");
+    Serial.println(*isWhiteLine);
   }
   else
   {

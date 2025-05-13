@@ -14,6 +14,7 @@ const yValue = document.getElementById('yValue');
 const manualToggle = document.getElementById('manualToggle');
 const indicatorDot = document.getElementById('indicatorDot');
 const startToggleButton = document.getElementById('startToggleButton');
+const whiteLineToggleButton = document.getElementById('whiteLineToggleButton');
 
 // BLE objects
 let device = null;
@@ -22,6 +23,7 @@ let service = null;
 let characteristic = null;
 let manualControl = false;
 let running = false;
+let isWhiteLine = false;
 
 // Command and movement tracking
 let currentX = 90;
@@ -275,6 +277,18 @@ startToggleButton.addEventListener('click', function() {
         log(`Running state change requested: ${running}`);
     } catch (error) {
         log(`Error toggling running state: ${error}`);
+    }
+});
+
+whiteLineToggleButton.addEventListener('click', function() {
+    try {
+        isWhiteLine = !isWhiteLine;
+        whiteLineToggleButton.style.color = !isWhiteLine ? "white" : "black";
+        whiteLineToggleButton.style.backgroundColor = !isWhiteLine ? "black" : "white";
+        sendCommand(`isWhiteLine$ isWhiteLine:${isWhiteLine}`);
+        log(`White line set to: ${isWhiteLine}`);
+    } catch (error) {
+        log(`Error toggling white line: ${error}`);
     }
 });
 
