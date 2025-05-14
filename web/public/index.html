@@ -22,7 +22,12 @@
         <div class="controls" id="pacerDiv">
             <input type="number" name="distanceInput" id="distanceInput" placeholder="Enter Distance">
             <input type="number" name="timeInput" id="timeInput" placeholder="Enter Time">
-            <input type="number" name="speedInput" id="speedInput" placeholder="Enter Speed">
+            <input type="number" name="paceInput" id="paceInput" placeholder="Enter Pace">
+            <div style="display: flex;">
+                <input type="checkbox" id="whiteLineToggle"/>
+                <label for="whiteLineToggle">Follow White Line</label>
+            </div>
+
             <div id="currentTime">0.00</div>
             <button id="startToggleButton">Go</button>
 
@@ -62,7 +67,7 @@
         </div>
 
         <button id="manualToggle">Switch to Manual Control</button>
-        <button id="whiteLineToggleButton" style="border:1px solid black; background-color: black; color: white;">Toggle Black/White Line</button>
+
 
         <div class="log">
             <h3>Event Log</h3>

@@ -39,7 +39,7 @@ void setupESC()
 int setMotorSpeed(int speedValue)
 {
   // Ensure input is within valid range
-  speedValue = constrain(speedValue, -100, 100);
+  speedValue = constrain((int)speedValue, -100, 100);
 
   // Calculate the pulse width based on the speed value
   int pulseWidth;
@@ -64,10 +64,10 @@ int setMotorSpeed(int speedValue)
   ESC.writeMicroseconds(pulseWidth);
 
   // Log the command (optional)
-  Serial.print("Speed value: ");
-  Serial.print(speedValue);
-  Serial.print(" | Pulse width: ");
-  Serial.println(pulseWidth);
+  // Serial.print("Speed value: ");
+  // Serial.print(speedValue);
+  // Serial.print(" | Pulse width: ");
+  // Serial.println(pulseWidth);
 
   return pulseWidth;
 }

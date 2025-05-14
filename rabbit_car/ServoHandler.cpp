@@ -63,12 +63,12 @@ int setSteering(int steeringValue)
   
 
   // Log the command
-  Serial.print("Steering value: ");
-  Serial.print(steeringValue);
-  Serial.print(" | Angle: ");
-  Serial.print(angle);
-  Serial.print(" | Pulse width: ");
-  Serial.println(pulseWidth);
+  // Serial.print("Steering value: ");
+  // Serial.print(steeringValue);
+  // Serial.print(" | Angle: ");
+  // Serial.print(angle);
+  // Serial.print(" | Pulse width: ");
+  // Serial.println(pulseWidth);
 
   return pulseWidth;
 }
