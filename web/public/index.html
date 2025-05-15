@@ -20,11 +20,20 @@
         <button id="disconnectBtn" disabled>Disconnect</button>
 
         <div class="controls" id="pacerDiv">
-            <input type="number" name="distanceInput" id="distanceInput" placeholder="Enter Distance">
-            <input type="number" name="timeInput" id="timeInput" placeholder="Enter Time">
-            <input type="number" name="paceInput" id="paceInput" placeholder="Enter Pace">
             <div style="display: flex;">
-                <input type="checkbox" id="whiteLineToggle"/>
+                <input type="number" name="distance" id="distanceInput" placeholder="Enter Distance">
+                <label for="distance">Distance</label>
+            </div>
+            <div style="display: flex;">
+                <input type="number" name="time" id="timeInput" placeholder="Enter Time">
+                <label for="time">Time</label>
+            </div>
+            <div style="display: flex;">
+                <input type="number" name="pace" id="paceInput" placeholder="Enter Pace">
+                <label for="pace">Pace</label>
+            </div>
+            <div style="display: flex;">
+                <input type="checkbox" id="whiteLineToggle" />
                 <label for="whiteLineToggle">Follow White Line</label>
             </div>
 

@@ -1,8 +1,8 @@
 // Import Bluetooth functionality
-import { 
-    connect, 
-    disconnect, 
-    sendCommand, 
+import {
+    connect,
+    disconnect,
+    sendCommand,
     requestMovementUpdate as bleRequestMovementUpdate,
     isConnected
 } from './bluetooth.js';
@@ -28,6 +28,10 @@ const paceInput = document.getElementById("paceInput");
 let manualControl = false;
 let running = false;
 let isWhiteLine = false;
+let lastUpdated = ["distance", "time"];
+let distance = { value: 0.0, unit: "meters" };
+let time = { value: 0.0, unit: "seconds" };
+let pace = { value: 0.0, unit: "m/s" };
 
 // Movement tracking
 let currentX = 90;
@@ -91,6 +95,122 @@ function resetXAxis() {
     xValue.textContent = '90';
     updateIndicator();
     requestMovementUpdate();
+}
+
+// update distance, time, and pace values accordingly
+//determine what the current value being changed is
+// replace the least recently updated value with the new calculated value
+function handleDTPInput(event) {
+    const name = event.currentTarget.name;
+    const inputValue = event.currentTarget.value;
+
+    // Handle empty input or non-numeric values
+    const value = inputValue === "" ? 0 : parseFloat(inputValue);
+
+    // Check if the parsed value is valid
+    if (isNaN(value) || value < 0) {
+        console.warn(`Invalid input for ${name}: ${inputValue}`);
+        return; // Don't process invalid inputs
+    }
+
+    // Update the corresponding value
+    if (name === "distance") {
+        distance.value = value;
+    } else if (name === "time") {
+        time.value = value;
+    } else if (name === "pace") {
+        pace.value = value;
+    }
+
+    // Update the lastUpdated array
+    // Remove the input if it's already in the array
+    lastUpdated = lastUpdated.filter(item => item !== name);
+    // Add the current input to the end (most recently updated)
+    lastUpdated.push(name);
+
+    // If we have more than 2 items, remove the oldest one
+    if (lastUpdated.length > 2) {
+        lastUpdated.shift();
+    }
+
+    // Calculate the missing value based on the two most recently updated values
+    let missingValue = updateMissingValue();
+
+    // Update the UI
+    updateUI(missingValue);
+}
+
+function updateMissingValue() {
+    // The missing value is the one not in the lastUpdated array
+    const allValues = ["distance", "time", "pace"];
+    const missingValue = allValues.find(value => !lastUpdated.includes(value));
+
+    // Calculate the missing value
+    try {
+        if (missingValue === "distance") {
+            distance.value = calculateDistance(time.value, pace.value);
+        } else if (missingValue === "time") {
+            time.value = calculateTime(distance.value, pace.value);
+        } else if (missingValue === "pace") {
+            pace.value = calculatePace(distance.value, time.value);
+        }
+        return missingValue;
+    } catch (error) {
+        console.error("Calculation error:", error);
+        // Keep the previous value if there's an error
+    }
+}
+
+function updateUI(missingValue) {
+    // Format values for display and handle potential NaN or Infinity
+    distanceInput.value = isFinite(distance.value) ? distance.value : "";
+    timeInput.value = isFinite(time.value) ? time.value : "";
+    paceInput.value = isFinite(pace.value) ? pace.value : "";
+
+    distanceInput.style.color = "black";
+    timeInput.style.color = "black";
+    paceInput.style.color = "black";
+    
+    if (missingValue === "distance") {
+        distanceInput.style.color = "red";
+    } else if (missingValue === "time") {
+        timeInput.style.color = "red";
+    } else if (missingValue === "pace") {
+        paceInput.style.color = "red";
+    }
+
+    console.log("Last updated:", lastUpdated);
+}
+
+function calculateDistance(time, pace) {
+    if (time <= 0 || pace <= 0) {
+        return 0; // Default value for invalid inputs
+    }
+    return time * pace;
+}
+
+function calculateTime(distance, pace) {
+    if (distance <= 0 || pace <= 0) {
+        return 0; // Default value for invalid inputs
+    }
+    return distance / pace;
+}
+
+function calculatePace(distance, time) {
+    if (distance <= 0 || time <= 0) {
+        return 0; // Default value for invalid inputs
+    }
+    return distance / time;
+}
+
+function convertToMeters(distance, units) {
+
+}
+function convertToSeconds(time, units) {
+
+}
+function convertToMperS(speed, units) {
+
 }
 
 // Reset Y axis
@@ -179,6 +299,10 @@ whiteLineToggle.addEventListener('change', function () {
         log(`Error toggling white line: ${error}`);
     }
 });
+
+distanceInput.addEventListener('input', (e) => handleDTPInput(e));
+timeInput.addEventListener('input', (e) => handleDTPInput(e));
+paceInput.addEventListener('input', (e) => handleDTPInput(e));
 
 // Initial log
 log('Web app loaded. Click "Connect to ESP32" to begin.');
