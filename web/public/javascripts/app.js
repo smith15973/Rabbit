@@ -1,6 +1,11 @@
-// BLE UUIDs
-const ESP32_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-const CONTROL_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+// Import Bluetooth functionality
+import { 
+    connect, 
+    disconnect, 
+    sendCommand, 
+    requestMovementUpdate as bleRequestMovementUpdate,
+    isConnected
+} from './bluetooth.js';
 
 // Element references
 const connectBtn = document.getElementById('connectBtn');
@@ -19,23 +24,17 @@ const distanceInput = document.getElementById("distanceInput");
 const timeInput = document.getElementById("timeInput");
 const paceInput = document.getElementById("paceInput");
 
-// BLE objects
-let device = null;
-let server = null;
-let service = null;
-let characteristic = null;
+// App state
 let manualControl = false;
 let running = false;
 let isWhiteLine = false;
 
-// Command and movement tracking
+// Movement tracking
 let currentX = 90;
 let currentY = 0;
-let pendingOperation = false;  // Tracks if any command is in flight
-let movementRequested = false;
 let lastSentX = null;
 let lastSentY = null;
-let commandQueue = [];  // Queue for critical commands
+let movementRequested = false;
 
 // Log function
 function log(message) {
@@ -45,180 +44,36 @@ function log(message) {
     logContent.scrollTop = logContent.scrollHeight;
 }
 
-// Connect to BLE device
-async function connect() {
-    try {
-        log('Requesting Bluetooth device...');
-        device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [ESP32_SERVICE_UUID] }]
-        });
-        log(`Device selected: ${device.name || 'Unnamed Device'}`);
-        device.addEventListener('gattserverdisconnected', onDisconnected);
-        log('Connecting to GATT server...');
-        server = await device.gatt.connect();
-        log('Getting primary service...');
-        service = await server.getPrimaryService(ESP32_SERVICE_UUID);
-        log('Getting characteristic...');
-        characteristic = await service.getCharacteristic(CONTROL_CHARACTERISTIC_UUID);
+// Connect handler
+async function handleConnect() {
+    const connected = await connect(log);
+    if (connected) {
         statusText.textContent = 'Connected';
         statusText.className = 'status connected';
         connectBtn.disabled = true;
         disconnectBtn.disabled = false;
-        log('Connected successfully!');
-
-        // Reset command state
-        pendingOperation = false;
-        commandQueue = [];
-        lastSentX = null;
-        lastSentY = null;
-    } catch (error) {
-        log(`Error: ${error}`);
-        disconnect();
     }
 }
 
-// Handle disconnection
-function onDisconnected() {
-    log('Device disconnected');
+// Disconnect handler
+async function handleDisconnect() {
+    await disconnect(log);
     statusText.textContent = 'Disconnected';
     statusText.className = 'status disconnected';
     connectBtn.disabled = false;
     disconnectBtn.disabled = true;
-    device = null;
-    server = null;
-    service = null;
-    characteristic = null;
-    pendingOperation = false;
-    commandQueue = [];
-}
-
-// Disconnect from device
-async function disconnect() {
-    if (device && device.gatt.connected) {
-        try {
-            // Clear any pending commands and immediately stop
-            pendingOperation = false;
-            commandQueue = [];
-
-            // Send stop command directly (bypass queue for disconnect)
-            if (characteristic) {
-                const stopData = JSON.stringify({
-                    type: "running",
-                    running: false
-                });
-                const encoder = new TextEncoder();
-                const data = encoder.encode(stopData);
-                await characteristic.writeValue(data);
-                log('Sent stop command before disconnect');
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 100));
-            device.gatt.disconnect();
-        } catch (error) {
-            log(`Error during disconnect: ${error}`);
-            onDisconnected();
-        }
-    } else {
-        onDisconnected();
-    }
-}
-
-async function sendCommand(valueData, isCritical = false) {
-    if (!characteristic) {
-        log('Error: No characteristic available');
-        return false;
-    }
-
-    // Convert to JSON string if object is passed
-    let dataToSend = valueData;
-    if (typeof valueData === 'object') {
-        dataToSend = JSON.stringify(valueData);
-    }
-
-    if (isCritical) {
-        // Critical commands go to the front of the queue
-        queueCriticalCommand(dataToSend);
-        return true;
-    } else {
-        // For non-critical commands
-        try {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(dataToSend);
-            await characteristic.writeValue(data);
-            log(`Sent command: ${dataToSend}`);
-            return true;
-        } catch (error) {
-            log(`Error sending command: ${error}`);
-            return false;
-        }
-    }
-}
-
-// Process command queue and movement updates with priority handling
-async function processCommandQueue() {
-    if (!characteristic || pendingOperation) return;
-
-    pendingOperation = true;
-
-    try {
-        // Process critical commands first
-        if (commandQueue.length > 0) {
-            const command = commandQueue.shift();
-            const encoder = new TextEncoder();
-            const data = encoder.encode(command.valueString);
-
-            await characteristic.writeValue(data);
-            log(`Sent critical command: ${command.valueString}`);
-
-            // If this was a manual control toggle, reset movement tracking
-            if (command.valueString.includes('"type":"manualControl"')) {
-                lastSentX = null;
-                lastSentY = null;
-            }
-        }
-        // Then process movement if no commands and movement is needed
-        else if (manualControl &&
-            (lastSentX !== currentX || lastSentY !== currentY || movementRequested)) {
-
-            movementRequested = false;
-            const movementData = JSON.stringify({
-                type: "movement",
-                angle: currentX,
-                motorSpeed: currentY
-            });
-
-            const encoder = new TextEncoder();
-            const data = encoder.encode(movementData);
-
-            await characteristic.writeValue(data);
-            lastSentX = currentX;
-            lastSentY = currentY;
-            log(`Sent movement: X:${currentX}, Y:${currentY}`);
-        }
-    } catch (error) {
-        log(`Error sending data: ${error}`);
-    } finally {
-        pendingOperation = false;
-
-        // Check if we need to send more commands
-        if (commandQueue.length > 0 ||
-            (manualControl && (lastSentX !== currentX || lastSentY !== currentY || movementRequested))) {
-            // Schedule next operation after a small delay
-            setTimeout(processCommandQueue, 10);
-        }
-    }
-}
-
-// Add a critical command to the queue
-function queueCriticalCommand(valueString) {
-    commandQueue.push({ valueString });
-    processCommandQueue();
 }
 
 // Request movement update (called by UI events)
 function requestMovementUpdate() {
-    movementRequested = true;
-    processCommandQueue();
+    if (isConnected()) {
+        const result = bleRequestMovementUpdate(log, manualControl, lastSentX, lastSentY, currentX, currentY);
+        lastSentX = result.lastSentX;
+        lastSentY = result.lastSentY;
+        movementRequested = result.movementRequested;
+    } else {
+        movementRequested = true;
+    }
 }
 
 // Update visual indicator
@@ -248,8 +103,8 @@ function resetYAxis() {
 }
 
 // Event listeners
-connectBtn.addEventListener('click', connect);
-disconnectBtn.addEventListener('click', disconnect);
+connectBtn.addEventListener('click', handleConnect);
+disconnectBtn.addEventListener('click', handleDisconnect);
 
 xSlider.addEventListener('input', function () {
     currentX = parseInt(this.value);
@@ -278,8 +133,8 @@ manualToggle.addEventListener('click', function () {
             type: "manualControl",
             enabled: manualControl
         });
-        log(`Manual Control ${manualControl ? 'enabled' : 'disabled'}`)
-        sendCommand(data, true);
+        log(`Manual Control ${manualControl ? 'enabled' : 'disabled'}`);
+        sendCommand(data, log, true);
         if (manualControl) {
             // Queue an immediate position update after mode change
             movementRequested = true;
@@ -303,7 +158,7 @@ startToggleButton.addEventListener('click', function () {
             isWhiteLine: isWhiteLine,
         });
 
-        sendCommand(data, true);
+        sendCommand(data, log, true);
         log(`Running state change requested: ${running}`);
     } catch (error) {
         log(`Error toggling running state: ${error}`);
@@ -318,7 +173,7 @@ whiteLineToggle.addEventListener('change', function () {
             type: "isWhiteLine",
             enabled: isWhiteLine,
         });
-        sendCommand(data);
+        sendCommand(data, log);
         log(`Set to follow ${isWhiteLine ? "WHITE" : "BLACK"} line`);
     } catch (error) {
         log(`Error toggling white line: ${error}`);
