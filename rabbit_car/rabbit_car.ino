@@ -31,8 +31,6 @@ void setup()
   Serial.begin(115200);
   Serial.println("Starting Rabbit...");
 
-  pinMode(BT_LED_PIN, OUTPUT);
-
   // Initialize ESC
   setupESC();
   // Initialize ESC

@@ -6,13 +6,13 @@ class MyServerCallbacks : public BLEServerCallbacks
   void onConnect(BLEServer *pServer)
   {
     Serial.println("BLE Client Connected");
-    digitalWrite(2, HIGH);
+    digitalWrite(BT_LED_PIN, HIGH);
   }
 
   void onDisconnect(BLEServer *pServer)
   {
     Serial.println("BLE Client Disconnected");
-    digitalWrite(2, LOW);
+    digitalWrite(BT_LED_PIN, LOW);
     stopESCOnDisconnect();
     RUNNING = false;               // Reset running state
     manualControl = false;         // Reset manual control
@@ -101,9 +101,12 @@ class MyCallbacks : public BLECharacteristicCallbacks
       else if (strcmp(dataType, "isWhiteLine") == 0)
       {
         IS_WHITE_LINE = doc["enabled"];
-        if (IS_WHITE_LINE) {
+        if (IS_WHITE_LINE)
+        {
           lightsOn();
-        } else {
+        }
+        else
+        {
           lightsOff();
         }
       }
@@ -123,12 +126,13 @@ class MyCallbacks : public BLECharacteristicCallbacks
 void setupBLE()
 {
   Serial.println("Starting BLE...");
-
+  pinMode(BT_LED_PIN, OUTPUT);
   // Initialize BLE device
   BLEDevice::init("ESP32 Rabbit");
 
   // Create BLE server
   BLEServer *pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks()); // Add this line
 
   // Create BLE service
   BLEService *pService = pServer->createService(SERVICE_UUID);
