@@ -40,20 +40,23 @@ void hsUpdate(float* currentSpeed, float* totalDistance) {
   
   // Calculate speed and distance every MEASUREMENT_INTERVAL
   if (currentTime - lastMeasurementTime >= MEASUREMENT_INTERVAL) {
-    // Calculate speed
+    // Get pulses during this interval
     unsigned long pulsesDuringInterval = intervalPulseCount;
     intervalPulseCount = 0; // Reset interval counter
     
-    // Calculate distance traveled during this interval (in km)
-    // Adjust for number of magnets (each pulse represents 1/MAGNETS_COUNT of a rotation)
-    float intervalDistance = (pulsesDuringInterval * WHEEL_CIRCUMFERENCE) / (MAGNETS_COUNT * 1000.0);
+    // Calculate distance traveled during this interval (in meters)
+    // Each pulse represents 1/MAGNETS_COUNT of a rotation
+    float intervalDistance = (pulsesDuringInterval * WHEEL_CIRCUMFERENCE) / (MAGNETS_COUNT * 1000.0); // mm to m
     
     // Add the interval distance to total distance
     *totalDistance += intervalDistance;
     
-    // Calculate current speed (km/h)
+    // Calculate current speed (m/s)
     float intervalSeconds = (float)(currentTime - lastMeasurementTime) / 1000.0;
-    *currentSpeed = (intervalDistance / intervalSeconds) * 3600.0; // Convert to km/h
+    *currentSpeed = intervalDistance / intervalSeconds;
+    
+    // Update running average speed
+    averageSpeed = (*totalDistance) / ((currentTime / 1000.0));
     
     // Update last measurement time
     lastMeasurementTime = currentTime;
@@ -63,8 +66,12 @@ void hsUpdate(float* currentSpeed, float* totalDistance) {
     Serial.print(pulseCount);
     Serial.print(" | Speed: ");
     Serial.print(*currentSpeed, 2);
-    Serial.print(" km/h | Distance: ");
-    Serial.print(*totalDistance * 1000, 3); // Convert km to m for display
-    Serial.println(" m");
+    Serial.print(" m/s (");
+    Serial.print(*currentSpeed * 3.6, 2); // Convert to km/h
+    Serial.print(" km/h) | Distance: ");
+    Serial.print(*totalDistance, 3);
+    Serial.print(" m | Avg Speed: ");
+    Serial.print(averageSpeed, 2);
+    Serial.println(" m/s");
   }
 }
