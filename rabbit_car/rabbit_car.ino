@@ -4,6 +4,7 @@
 #include "ServoHandler.h"
 #include "HSHandler.h"
 #include "IR8Handler.h"
+#include "Lights.h"
 #include "config.h"
 
 // Define direction variables
@@ -42,6 +43,8 @@ void setup()
   ir8Setup();
   // Initialize BLE
   setupBLE();
+  // Initialize Lights
+  setupLights();
 }
 
 void loop()

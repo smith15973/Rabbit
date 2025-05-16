@@ -9,8 +9,12 @@
 // Pin definitions
 #define ESC_PIN 25   // GPIO pin connected to ESC signal
 #define SERVO_PIN 26 // GPIO pin connected to Servo signal
-#define HS_PIN 13    // GPIO pin connected to digital hall sensor
+#define HS_PIN 5    // GPIO pin connected to digital hall sensor
 #define BT_LED_PIN 2 // GPIO pin connected to bt connected indicator
+
+#define HEADLIGHT_PIN 12
+#define LEFT_LIGHT_PIN 13
+#define RIGHT_LIGHT_PIN 14
 
 #define IR_SDA_PIN 21
 #define IR_SCL_PIN 22

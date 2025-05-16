@@ -77,7 +77,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         if (doc.containsKey("pace") && !doc["pace"].as<String>().isEmpty())
         {
           targetPace = doc["pace"].as<float>();
-          MOTOR_SPEED = (int) targetPace;
+          MOTOR_SPEED = (int)targetPace;
           Serial.print("pace: ");
           Serial.println(targetPace);
         }
@@ -101,7 +101,17 @@ class MyCallbacks : public BLECharacteristicCallbacks
       else if (strcmp(dataType, "isWhiteLine") == 0)
       {
         IS_WHITE_LINE = doc["enabled"];
+        if (IS_WHITE_LINE) {
+          lightsOn();
+        } else {
+          lightsOff();
+        }
       }
+      else if (strcmp(dataType, "lights") == 0)
+      {
+        // placeholder
+      }
+
       else
       {
         Serial.println("Unknown data type");

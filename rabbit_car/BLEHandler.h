@@ -8,6 +8,7 @@
 #include "config.h"
 #include "ESCHandler.h"
 #include <ArduinoJson.h>
+#include "Lights.h"
 
 void setupBLE();
 void stopESCOnDisconnect();
