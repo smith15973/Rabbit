@@ -1,4 +1,4 @@
-// ESCHandler.h
+// HSHandler.h
 #ifndef HS_HANDLER_H
 #define HS_HANDLER_H
 
@@ -6,6 +6,7 @@
 #include "config.h"
 
 void setupHS();
-void hsUpdate(float*, float*);
+void hsUpdate(float *, float *, float *);
+void hsStart();
 
 #endif

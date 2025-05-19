@@ -96,6 +96,26 @@ float kmh_to_miph(float speed)
 }
 
 // time conversions
+float micros_to_s(unsigned long time)
+{
+    return time / 1000000.0;
+}
+
+unsigned long s_to_micros(float time)
+{
+    return (unsigned long)(time * 1000000);
+}
+
+float millis_to_s(unsigned long time)
+{
+    return time / 1000.0;
+}
+
+unsigned long s_to_millis(float time)
+{
+    return (unsigned long)(time * 1000);
+}
+
 float s_to_min(float time)
 {
     return time / 60.0;

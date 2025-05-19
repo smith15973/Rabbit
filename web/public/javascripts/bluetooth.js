@@ -1,14 +1,19 @@
 // BLE UUIDs
 const ESP32_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 const CONTROL_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+const DATA_CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a9'; // Fixed syntax
 
 // BLE objects
 let device = null;
 let server = null;
 let service = null;
 let characteristic = null;
+let dataCharacteristic = null;
 let pendingOperation = false;  // Tracks if any command is in flight
 let commandQueue = [];  // Queue for critical commands
+
+// Import state update function
+import { updateDataState, log } from './app.js';
 
 // Connect to BLE device
 async function connect(logCallback) {
@@ -25,12 +30,22 @@ async function connect(logCallback) {
         service = await server.getPrimaryService(ESP32_SERVICE_UUID);
         logCallback('Getting characteristic...');
         characteristic = await service.getCharacteristic(CONTROL_CHARACTERISTIC_UUID);
-        logCallback('Connected successfully!');
+        logCallback('Getting data characteristic...');
+        dataCharacteristic = await service.getCharacteristic(DATA_CHARACTERISTIC_UUID);
 
-        // Reset command state
+        // Start notifications
+        try {
+            await dataCharacteristic.startNotifications();
+            logCallback('Notifications started');
+            dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataReceived);
+        } catch (error) {
+            logCallback(`Error starting notifications: ${error}`);
+            throw error;
+        }
+
+        logCallback('Connected successfully!');
         pendingOperation = false;
         commandQueue = [];
-        
         return true;
     } catch (error) {
         logCallback(`Error: ${error}`);
@@ -46,6 +61,7 @@ function onDisconnected(logCallback) {
     server = null;
     service = null;
     characteristic = null;
+    dataCharacteristic = null;
     pendingOperation = false;
     commandQueue = [];
 }
@@ -183,10 +199,10 @@ async function processCommandQueue(logCallback, manualControl, lastSentX, lastSe
         }
     }
 
-    return { 
-        lastSentX: updatedLastSentX, 
-        lastSentY: updatedLastSentY, 
-        movementRequested: updatedMovementRequested 
+    return {
+        lastSentX: updatedLastSentX,
+        lastSentY: updatedLastSentY,
+        movementRequested: updatedMovementRequested
     };
 }
 
@@ -201,12 +217,27 @@ function isConnected() {
     return device !== null && characteristic !== null;
 }
 
-// Export functions for use in app.js
+// Handle received data
+function handleDataReceived(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder('utf-8');
+    const jsonString = decoder.decode(value);
+
+    try {
+        const data = JSON.parse(jsonString);
+        updateDataState(data); // Update app state
+        log(`Received data: ${jsonString}`);
+    } catch (error) {
+        console.error('Error parsing JSON data:', error);
+        log(`Error parsing data: ${error.message}`);
+    }
+}
+
 export {
     connect,
     disconnect,
     sendCommand,
     requestMovementUpdate,
     processCommandQueue,
-    isConnected
+    isConnected,
 };

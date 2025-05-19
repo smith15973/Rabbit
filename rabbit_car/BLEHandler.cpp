@@ -1,12 +1,18 @@
 // BLEHandler.cpp
 #include "BLEHandler.h"
 
+// Global BLE objects
+BLEServer *pServer = NULL;
+BLECharacteristic *pDataCharacteristic = NULL;
+bool deviceConnected = false;
+
 class MyServerCallbacks : public BLEServerCallbacks
 {
   void onConnect(BLEServer *pServer)
   {
     Serial.println("BLE Client Connected");
     digitalWrite(BT_LED_PIN, HIGH);
+    deviceConnected = true;
   }
 
   void onDisconnect(BLEServer *pServer)
@@ -14,8 +20,9 @@ class MyServerCallbacks : public BLEServerCallbacks
     Serial.println("BLE Client Disconnected");
     digitalWrite(BT_LED_PIN, LOW);
     stopESCOnDisconnect();
-    RUNNING = false;               // Reset running state
-    manualControl = false;         // Reset manual control
+    RUNNING = false;       // Reset running state
+    manualControl = false; // Reset manual control
+    deviceConnected = false;
     BLEDevice::startAdvertising(); // Restart advertising to allow new connections
   }
 };
@@ -55,10 +62,19 @@ class MyCallbacks : public BLECharacteristicCallbacks
       }
       else if (strcmp(dataType, "manualControl") == 0)
       {
+        bool previousMode = manualControl;
         manualControl = doc["enabled"];
+        if (manualControl != previousMode)
+        {
+          startRunTimer = true;
+        }
       }
       else if (strcmp(dataType, "running") == 0)
       {
+        if (doc["running"])
+        {
+          startRunTimer = true;
+        }
         RUNNING = doc["running"];
 
         // You can also extract other fields if needed
@@ -87,16 +103,6 @@ class MyCallbacks : public BLECharacteristicCallbacks
           Serial.print("isWhiteLine: ");
           Serial.println(IS_WHITE_LINE);
         }
-
-        // start timer
-        if (doc["running"])
-        {
-          startTime = micros();
-          Serial.print(startTime);
-          Serial.println(" - START RUN!");
-          Serial.print(startTime + (targetTime * 1000000UL));
-          Serial.println(" - IS END TIME!");
-        }
       }
       else if (strcmp(dataType, "isWhiteLine") == 0)
       {
@@ -114,7 +120,6 @@ class MyCallbacks : public BLECharacteristicCallbacks
       {
         // placeholder
       }
-
       else
       {
         Serial.println("Unknown data type");
@@ -122,6 +127,67 @@ class MyCallbacks : public BLECharacteristicCallbacks
     }
   }
 };
+
+/**
+ * Function to broadcast Distance, Time, Pace, and Speed data over BLE
+ * @param distance Distance value in meters
+ * @param time Time value in seconds
+ * @param pace Pace value in meters per second
+ * @param speed Speed value in meters per second
+ * @return bool True if data was sent successfully, false otherwise
+ */
+bool bleBroadcastDTPS(float distance, float time, float pace, float speed)
+{
+  // Check if 500ms has elapsed since the last broadcast
+  static unsigned long lastBroadcastTime = 0;
+  if (millis() - lastBroadcastTime < 500)
+  {
+    return false; // Exit early if it's too soon to broadcast
+  }
+
+  if (!deviceConnected)
+  {
+    // No need to print a message here as it could flood the serial output
+    return false;
+  }
+
+  // Create a JSON document
+  StaticJsonDocument<200> doc;
+
+  // Create nested objects
+  JsonObject speedObj = doc["currentSpeed"].to<JsonObject>();
+  speedObj["value"] = speed;
+  speedObj["units"] = "mps";
+
+  JsonObject distObj = doc["distance"].to<JsonObject>();
+  distObj["value"] = distance;
+  distObj["units"] = "m";
+
+  JsonObject paceObj = doc["averagePace"].to<JsonObject>();
+  paceObj["value"] = pace;
+  paceObj["units"] = "mps";
+
+  JsonObject timeObj = doc["time"].to<JsonObject>();
+  timeObj["value"] = time;
+  timeObj["units"] = "s";
+
+  // Serialize JSON to string
+  String jsonString;
+  serializeJson(doc, jsonString);
+
+  // Send the value to the app
+  pDataCharacteristic->setValue(jsonString.c_str());
+  pDataCharacteristic->notify();
+
+  // Update the last broadcast time
+  lastBroadcastTime = millis();
+
+  // Only print every 500ms to avoid flooding the serial console
+  Serial.print("Sent data: ");
+  Serial.println(jsonString);
+
+  return true;
+}
 
 void setupBLE()
 {
@@ -131,20 +197,29 @@ void setupBLE()
   BLEDevice::init("ESP32 Rabbit");
 
   // Create BLE server
-  BLEServer *pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks()); // Add this line
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
 
   // Create BLE service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create BLE characteristic
+  // Create BLE characteristic for commands
   BLECharacteristic *pCharacteristic = pService->createCharacteristic(
       CHARACTERISTIC_UUID,
       BLECharacteristic::PROPERTY_READ |
           BLECharacteristic::PROPERTY_WRITE);
 
-  // Set callbacks
+  // Set callbacks for command characteristic
   pCharacteristic->setCallbacks(new MyCallbacks());
+
+  // Create BLE characteristic for data broadcasting (DTPS data)
+  pDataCharacteristic = pService->createCharacteristic(
+      DATA_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_READ |
+          BLECharacteristic::PROPERTY_NOTIFY);
+
+  // Add descriptor for client configuration (required for notifications)
+  pDataCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();

@@ -23,17 +23,27 @@ const whiteLineToggle = document.getElementById('whiteLineToggle');
 const distanceInput = document.getElementById("distanceInput");
 const timeInput = document.getElementById("timeInput");
 const paceInput = document.getElementById("paceInput");
+const currentSpeedDisplay = document.getElementById('current-speed');
+const distanceDisplay = document.getElementById('distance');
+const averagePaceDisplay = document.getElementById('average-pace');
+const timeDisplay = document.getElementById('time');
 
-// App state
+// App state for user-set parameters
+export let distance = { value: 0.0, unit: "meters" };
+export let time = { value: 0.0, unit: "seconds" };
+export let pace = { value: 0.0, unit: "m/s" };
+
+// App state for BLE-received data
+let currentSpeed = { value: 0.0, unit: "m/s" };
+let receivedDistance = { value: 0.0, unit: "meters" };
+let averagePace = { value: 0.0, unit: "m/s" };
+let elapsedTime = { value: 0.0, unit: "seconds" };
+
+// Other state
 let manualControl = false;
 let running = false;
 let isWhiteLine = false;
 let lastUpdated = ["distance", "time"];
-let distance = { value: 0.0, unit: "meters" };
-let time = { value: 0.0, unit: "seconds" };
-let pace = { value: 0.0, unit: "m/s" };
-
-// Movement tracking
 let currentX = 90;
 let currentY = 0;
 let lastSentX = null;
@@ -41,7 +51,7 @@ let lastSentY = null;
 let movementRequested = false;
 
 // Log function
-function log(message) {
+export function log(message) {
     const p = document.createElement('p');
     p.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
     logContent.appendChild(p);
@@ -66,9 +76,80 @@ async function handleDisconnect() {
     statusText.className = 'status disconnected';
     connectBtn.disabled = false;
     disconnectBtn.disabled = true;
+    resetDataUIState();
+    currentSpeed.value = 0.0;
+    receivedDistance.value = 0.0;
+    averagePace.value = 0.0;
+    elapsedTime.value = 0.0;
 }
 
-// Request movement update (called by UI events)
+// Update BLE-received data state
+export function updateDataState(newData) {
+    if (newData.currentSpeed && typeof newData.currentSpeed.value === 'number' && newData.currentSpeed.value >= 0) {
+        currentSpeed.value = convertToMperS(newData.currentSpeed.value, newData.currentSpeed.unit || "m/s");
+        currentSpeed.unit = "m/s";
+    }
+    if (newData.distance && typeof newData.distance.value === 'number' && newData.distance.value >= 0) {
+        receivedDistance.value = convertToMeters(newData.distance.value, newData.distance.unit || "meters");
+        receivedDistance.unit = "meters";
+    }
+    if (newData.averagePace && typeof newData.averagePace.value === 'number' && newData.averagePace.value >= 0) {
+        averagePace.value = convertToMperS(newData.averagePace.value, newData.averagePace.unit || "m/s");
+        averagePace.unit = "m/s";
+    }
+    if (newData.time && typeof newData.time.value === 'number' && newData.time.value >= 0) {
+        elapsedTime.value = convertToSeconds(newData.time.value, newData.time.unit || "seconds");
+        elapsedTime.unit = "seconds";
+    }
+    updateDataDisplay();
+}
+
+// Update display elements with BLE data
+function updateDataDisplay() {
+    currentSpeedDisplay.textContent = currentSpeed.value.toFixed(2);
+    distanceDisplay.textContent = receivedDistance.value.toFixed(2);
+    averagePaceDisplay.textContent = averagePace.value.toFixed(2);
+    timeDisplay.textContent = elapsedTime.value.toFixed(2);
+}
+
+// Unit conversion functions
+function convertToMeters(distance, units) {
+    switch (units.toLowerCase()) {
+        case "kilometers":
+            return distance * 1000;
+        case "miles":
+            return distance * 1609.34;
+        case "meters":
+        default:
+            return distance;
+    }
+}
+
+function convertToSeconds(time, units) {
+    switch (units.toLowerCase()) {
+        case "minutes":
+            return time * 60;
+        case "hours":
+            return time * 3600;
+        case "seconds":
+        default:
+            return time;
+    }
+}
+
+function convertToMperS(speed, units) {
+    switch (units.toLowerCase()) {
+        case "km/h":
+            return speed / 3.6;
+        case "mph":
+            return speed * 0.44704;
+        case "m/s":
+        default:
+            return speed;
+    }
+}
+
+// Request movement update
 function requestMovementUpdate() {
     if (isConnected()) {
         const result = bleRequestMovementUpdate(log, manualControl, lastSentX, lastSentY, currentX, currentY);
@@ -93,6 +174,15 @@ function resetXAxis() {
     xSlider.value = 90;
     currentX = 90;
     xValue.textContent = '90';
+    updateIndicator();
+    requestMovementUpdate();
+}
+
+// Reset Y axis
+function resetYAxis() {
+    ySlider.value = 0;
+    currentY = 0;
+    yValue.textContent = '0';
     updateIndicator();
     requestMovementUpdate();
 }
@@ -138,6 +228,18 @@ function handleDTPInput(event) {
 
     // Update the UI
     updateUI(missingValue);
+
+    if (running && isConnected()) {
+        const data = JSON.stringify({
+            type: "settings",
+            distance: distance.value,
+            time: time.value,
+            pace: pace.value,
+            isWhiteLine: isWhiteLine,
+        });
+        sendCommand(data, log, true);
+        log(`Sent updated settings: ${data}`);
+    }
 }
 
 function updateMissingValue() {
@@ -170,7 +272,7 @@ function updateUI(missingValue) {
     distanceInput.style.color = "black";
     timeInput.style.color = "black";
     paceInput.style.color = "black";
-    
+
     if (missingValue === "distance") {
         distanceInput.style.color = "red";
     } else if (missingValue === "time") {
@@ -178,8 +280,6 @@ function updateUI(missingValue) {
     } else if (missingValue === "pace") {
         paceInput.style.color = "red";
     }
-
-    console.log("Last updated:", lastUpdated);
 }
 
 function calculateDistance(time, pace) {
@@ -203,23 +303,12 @@ function calculatePace(distance, time) {
     return distance / time;
 }
 
-function convertToMeters(distance, units) {
-
-}
-function convertToSeconds(time, units) {
-
-}
-function convertToMperS(speed, units) {
-
-}
-
-// Reset Y axis
-function resetYAxis() {
-    ySlider.value = 0;
-    currentY = 0;
-    yValue.textContent = '0';
-    updateIndicator();
-    requestMovementUpdate();
+// Reset UI state
+function resetDataUIState() {
+    currentSpeedDisplay.textContent = '0.00';
+    distanceDisplay.textContent = '0.00';
+    averagePaceDisplay.textContent = '0.00';
+    timeDisplay.textContent = '0.00';
 }
 
 // Event listeners
@@ -257,7 +346,7 @@ manualToggle.addEventListener('click', function () {
         sendCommand(data, log, true);
         if (manualControl) {
             // Queue an immediate position update after mode change
-            movementRequested = true;
+            movementRequested = true;     
         }
     } catch (error) {
         log(`Error toggling manual control: ${error}`);

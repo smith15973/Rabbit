@@ -1,5 +1,5 @@
-#ifndef HS_HANDLER_H
-#define HS_HANDLER_H
+#ifndef CONVERSIONS_HANDLER_H
+#define CONVERSIONS_HANDLER_H
 
 #include <arduino.h>
 
@@ -46,6 +46,14 @@ float kmh_to_mps(float speed);
 float kmh_to_miph(float speed);
 
 // time conversions
+float micros_to_s(unsigned long time);
+
+unsigned long s_to_micros(float time);
+
+float millis_to_s(unsigned long time);
+
+unsigned long s_to_millis(float time);
+
 float s_to_min(float time);
 
 float min_to_s(float time);
