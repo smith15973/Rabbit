@@ -24,11 +24,11 @@
 #define IR_KEY_PIN 18
 #define IR_RESET_PIN 19
 
-const int WHEEL_DIAMETER = 83; // wheel diameter in mm
-const int MAGNETS_COUNT = 4;   // the number of magnets spaced evenly on a wheel
+const int WHEEL_DIAMETER = 82; // wheel diameter in mm
+const int MAGNETS_COUNT = 8;   // the number of magnets spaced evenly on a wheel
 
 // external variables
-extern int MOTOR_SPEED;
+extern float MOTOR_SPEED;
 extern int SERVO_ANGLE;
 extern bool manualControl;
 extern bool RUNNING;

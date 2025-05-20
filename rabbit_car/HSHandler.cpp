@@ -1,7 +1,7 @@
 #include "HSHandler.h"
 
 const float WHEEL_CIRCUMFERENCE = PI * WHEEL_DIAMETER; // in mm
-const float MEASUREMENT_INTERVAL = 1000000;               // Time interval for speed calculation (ms)
+const float MEASUREMENT_INTERVAL = 200000;               // Time interval for speed calculation (ms)
 
 // Variables
 volatile unsigned long pulseCount = 0;         // Total pulse count

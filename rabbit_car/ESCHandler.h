@@ -6,7 +6,10 @@
 #include "config.h"
 
 void setupESC();
-int setMotorSpeed(int speedValue);
+void setMotorSpeed(float speedValue);
 void stopESC();
+void adjustMotorSpeedPID(float currentSpeed, float targetPace);
+void increaseMotorSpeed();
+void decreaseMotorSpeed();
 
 #endif
