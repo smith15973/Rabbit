@@ -20,18 +20,58 @@
         <button id="disconnectBtn" disabled>Disconnect</button>
 
         <div class="controls" id="pacerDiv">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div>
+                    <input type="radio" name="mode" id="raceModeRadio" value="RACE" checked />
+                    <label for="raceModeRadio">Race Pace Mode: Time + Distance → vary speed to hit exact finish
+                        time</label>
+                </div>
+                <div>
+                    <input type="radio" name="mode" id="tempoModeRadio" value="TEMPO" />
+                    <label for="tempoModeRadio">Tempo Mode: Speed + Time → maintain constant speed</label>
+                </div>
+                <div>
+                    <input type="radio" name="mode" id="distanceModeRadio" value="DISTANCE_PACE" />
+                    <label for="distanceModeRadio">Distance Pace Mode: Speed + Distance → maintain constant speed until
+                        distance complete</label>
+                </div>
+            </div>
+
             <div style="display: flex;">
-                <input type="number" name="distance" id="distanceInput" placeholder="Enter Distance">
+                <input type="number" name="distance" id="distanceInput" placeholder="Enter Distance" step="0.01">
                 <label for="distance">Distance</label>
             </div>
             <div style="display: flex;">
-                <input type="number" name="time" id="timeInput" placeholder="Enter Time">
+                <input type="number" name="time" id="timeInput" placeholder="Enter Time" step="0.01">
                 <label for="time">Time</label>
             </div>
             <div style="display: flex;">
-                <input type="number" name="pace" id="paceInput" placeholder="Enter Pace">
+                <input type="number" name="pace" id="paceInput" placeholder="Enter Pace" step="0.01">
                 <label for="pace">Pace</label>
             </div>
+
+            <div style="display: flex;">
+                <input type="number" name="speedKP" id="speedKPInput" placeholder="Enter Speed KP" step="0.001" value="10.000">
+                <label for="speedKPInput">Speed KP</label>
+            </div>
+            <div style="display: flex;">
+                <input type="number" name="speedKI" id="speedKIInput" placeholder="Enter Speed KI" step="0.001" value="0">
+                <label for="speedKIInput">Speed KI</label>
+            </div>
+            <div style="display: flex;">
+                <input type="number" name="speedKD" id="speedKDInput" placeholder="Enter Speed KD" step="0.001" value="3">
+                <label for="speedKDInput">Speed KD</label>
+            </div>
+            <div style="display: flex;">
+                <input type="number" name="SPEED_MAX_INTEGRAL" id="SPEED_MAX_INTEGRALInput" placeholder="Enter SPEED_MAX_INTEGRAL" step="0.001" value="200">
+                <label for="SPEED_MAX_INTEGRAL">SPEED_MAX_INTEGRAL</label>
+            </div>
+            <div style="display: flex;">
+                <input type="number" name="SPEED_MAX_ACCELERATION" id="SPEED_MAX_ACCELERATIONInput" placeholder="Enter SPEED_MAX_ACCELERATION" step="0.001" value="50">
+                <label for="SPEED_MAX_ACCELERATION">SPEED_MAX_ACCELERATION</label>
+            </div>
+            
+
             <div style="display: flex;">
                 <input type="checkbox" id="whiteLineToggle" />
                 <label for="whiteLineToggle">Follow White Line</label>
@@ -66,9 +106,17 @@
                 <div id="time" class="metric-value">0.00</div>
                 <div class="metric-units">seconds</div>
             </div>
+
+        </div>
+        <div>
+            <h4>Speed Readings: </h4>
+            <div id="speedReadingsDisplay" style="display: flex; flex-wrap: wrap; max-width: 100%; max-height: 300px; overflow: auto; border: 1px solid #ccc; padding: 8px; border-radius: 6px; background: #fafbfc;"></div>
+
+            </div>
+            <canvas id="speedChart" width="800" height="400"></canvas>
         </div>
 
-        <div class="controls" id="controlsDiv">
+        <div class="controls" id="controlsDiv" hidden>
             <h2>RC-Style Controls</h2>
             <p>Left stick controls forward/backward, right stick controls left/right</p>
 
@@ -111,6 +159,7 @@
     </div>
 
     <script type="module" src="javascripts/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 
 </html>

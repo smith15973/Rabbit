@@ -35,9 +35,23 @@ extern bool RUNNING;
 extern bool startRunTimer;
 extern bool IS_WHITE_LINE; // determines whenther the logic follows a white or black line
 
+extern String MODE;
+extern bool BRAKE;
 extern float targetTime;     // user entered run time in seconds
 extern float targetDistance; // user entered target distance in meters
-extern float targetPace;     // user entered target pace in m/s
+extern float targetSpeed;    // user entered target pace in m/s
+
+extern float speedKP;
+extern float speedKI;
+extern float speedKD;
+extern float SPEED_MAX_INTEGRAL;
+extern float SPEED_MAX_ACCELERATION;
+
+extern float steerKP;
+extern float steerKI;
+extern float steerKD;
+extern float STEER_MAX_INTEGRAL;
+
 extern volatile unsigned long startTime;
 extern volatile unsigned long currentRunDuration;
 extern volatile unsigned long endTime;

@@ -8,7 +8,9 @@
 void setupESC();
 void setMotorSpeed(float speedValue);
 void stopESC();
-void adjustMotorSpeedPID(float currentSpeed, float targetPace);
+void brakeESC();
+void resetPID();
+void adjustMotorSpeedPID(float currentSpeed, float targetSpeed);
 void increaseMotorSpeed();
 void decreaseMotorSpeed();
 

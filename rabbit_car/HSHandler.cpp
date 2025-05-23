@@ -97,4 +97,5 @@ void hsStart()
 
   pulseCount = 0;
   intervalPulseCount = 0;
+  lastMeasurementTime = micros();
 }

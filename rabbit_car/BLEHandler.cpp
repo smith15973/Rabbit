@@ -71,9 +71,22 @@ class MyCallbacks : public BLECharacteristicCallbacks
       }
       else if (strcmp(dataType, "running") == 0)
       {
+        MODE = doc["mode"].as<String>();
+        speedKP = doc["speedKP"].as<float>();
+        speedKI = doc["speedKI"].as<float>();
+        speedKD = doc["speedKD"].as<float>();
+        SPEED_MAX_INTEGRAL = doc["SPEED_MAX_INTEGRAL"].as<float>();
+        SPEED_MAX_ACCELERATION = doc["SPEED_MAX_ACCELERATION"].as<float>();
+
+        steerKP = doc["steerKP"].as<float>();
+        steerKI = doc["steerKI"].as<float>();
+        steerKD = doc["steerKD"].as<float>();
+        STEER_MAX_INTEGRAL = doc["STEER_MAX_INTEGRAL"].as<float>();
         if (doc["running"])
         {
           startRunTimer = true;
+        } else {
+          BRAKE = true;
         }
         RUNNING = doc["running"];
 
@@ -92,10 +105,10 @@ class MyCallbacks : public BLECharacteristicCallbacks
         }
         if (doc.containsKey("pace") && !doc["pace"].as<String>().isEmpty())
         {
-          targetPace = doc["pace"].as<float>();
-          MOTOR_SPEED = (int)targetPace;
+          targetSpeed = doc["pace"].as<float>();
+          MOTOR_SPEED = (int)targetSpeed;
           Serial.print("pace: ");
-          Serial.println(targetPace);
+          Serial.println(targetSpeed);
         }
         if (doc.containsKey("isWhiteLine") && !doc["isWhiteLine"].as<String>().isEmpty())
         {
@@ -138,9 +151,9 @@ class MyCallbacks : public BLECharacteristicCallbacks
  */
 bool bleBroadcastDTPS(float distance, float time, float pace, float speed)
 {
-  // Check if 500ms has elapsed since the last broadcast
+  // Check if 100ms has elapsed since the last broadcast
   static unsigned long lastBroadcastTime = 0;
-  if (millis() - lastBroadcastTime < 500)
+  if (millis() - lastBroadcastTime < 100)
   {
     return false; // Exit early if it's too soon to broadcast
   }

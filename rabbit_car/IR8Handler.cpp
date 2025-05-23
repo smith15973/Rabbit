@@ -21,6 +21,11 @@ int error = 0;             // Current error (negative: line is left, positive: l
 unsigned long lastReadTime = 0;
 const unsigned long READ_INTERVAL = 50; // Check sensors every 50ms for fast response
 
+float steerKP;
+float steerKI;
+float steerKD;
+float STEER_MAX_INTEGRAL;
+
 void ir8Setup()
 {
   // Initialize I2C communication

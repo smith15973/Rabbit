@@ -27,11 +27,60 @@ const currentSpeedDisplay = document.getElementById('current-speed');
 const distanceDisplay = document.getElementById('distance');
 const averagePaceDisplay = document.getElementById('average-pace');
 const timeDisplay = document.getElementById('time');
+const speedReadingsDisplay = document.getElementById('speedReadingsDisplay');
+let speedReadings = [];
+
+const speedKP = 2.5;
+const speedKI = 0.55;
+const speedKD = 0.01;
+const SPEED_MAX_INTEGRAL = 5000
+const SPEED_MAX_ACCELERATION = 5000
+
+document.getElementById("speedKPInput").value = speedKP;
+document.getElementById("speedKIInput").value = speedKI;
+document.getElementById("speedKDInput").value = speedKD;
+document.getElementById("SPEED_MAX_INTEGRALInput").value = SPEED_MAX_INTEGRAL;
+document.getElementById("SPEED_MAX_ACCELERATIONInput").value = SPEED_MAX_ACCELERATION;
+
+
+const ctx = document.getElementById('speedChart').getContext('2d');
+let speedChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Speed',
+            data: [],
+            borderColor: 'blue',
+            fill: false,
+            tension: 0.1,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Time (arbitrary units)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Speed'
+                }
+            }
+        }
+    }
+});
+
 
 // App state for user-set parameters
 export let distance = { value: 0.0, unit: "meters" };
 export let time = { value: 0.0, unit: "seconds" };
 export let pace = { value: 0.0, unit: "m/s" };
+export let mode = "RACE";
 
 // App state for BLE-received data
 let currentSpeed = { value: 0.0, unit: "m/s" };
@@ -88,6 +137,13 @@ export function updateDataState(newData) {
     if (newData.currentSpeed && typeof newData.currentSpeed.value === 'number' && newData.currentSpeed.value >= 0) {
         currentSpeed.value = convertToMperS(newData.currentSpeed.value, newData.currentSpeed.unit || "m/s");
         currentSpeed.unit = "m/s";
+        speedReadings.push(currentSpeed.value)
+        speedReadingsDisplay.innerHTML = speedReadings;
+
+        // Update the chart
+        speedChart.data.labels = speedReadings.map((_, index) => index);
+        speedChart.data.datasets[0].data = speedReadings;
+        speedChart.update();
     }
     if (newData.distance && typeof newData.distance.value === 'number' && newData.distance.value >= 0) {
         receivedDistance.value = convertToMeters(newData.distance.value, newData.distance.unit || "meters");
@@ -265,9 +321,18 @@ function updateMissingValue() {
 
 function updateUI(missingValue) {
     // Format values for display and handle potential NaN or Infinity
-    distanceInput.value = isFinite(distance.value) ? distance.value : "";
-    timeInput.value = isFinite(time.value) ? time.value : "";
-    paceInput.value = isFinite(pace.value) ? pace.value : "";
+    if (document.activeElement !== distanceInput) {
+        distanceInput.value = isFinite(distance.value) ? distance.value.toFixed(3) : "";
+        distanceInput.style.color = missingValue === "distance" ? "red" : "black";
+    }
+    if (document.activeElement !== timeInput) {
+        timeInput.value = isFinite(time.value) ? time.value.toFixed(3) : "";
+        timeInput.style.color = missingValue === "time" ? "red" : "black";
+    }
+    if (document.activeElement !== paceInput) {
+        paceInput.value = isFinite(pace.value) ? pace.value.toFixed(3) : "";
+        paceInput.style.color = missingValue === "pace" ? "red" : "black";
+    }
 
     distanceInput.style.color = "black";
     timeInput.style.color = "black";
@@ -346,7 +411,7 @@ manualToggle.addEventListener('click', function () {
         sendCommand(data, log, true);
         if (manualControl) {
             // Queue an immediate position update after mode change
-            movementRequested = true;     
+            movementRequested = true;
         }
     } catch (error) {
         log(`Error toggling manual control: ${error}`);
@@ -357,6 +422,7 @@ startToggleButton.addEventListener('click', function () {
     try {
         running = !running;
         startToggleButton.innerText = running ? "STOP" : "GO";
+        speedReadings = running ? [] : speedReadings
 
         const data = JSON.stringify({
             type: "running",
@@ -365,6 +431,16 @@ startToggleButton.addEventListener('click', function () {
             time: timeInput.value,
             pace: paceInput.value,
             isWhiteLine: isWhiteLine,
+            mode: document.querySelector('input[name="mode"]:checked')?.value,
+            speedKP: document.getElementById("speedKPInput")?.value || speedKP,
+            speedKI: document.getElementById("speedKDInput")?.value || speedKI,
+            speedKD: document.getElementById("speedKIInput")?.value || speedKD,
+            SPEED_MAX_INTEGRAL: document.getElementById("SPEED_MAX_INTEGRALInput")?.value || SPEED_MAX_INTEGRAL,
+            SPEED_MAX_ACCELERATION: document.getElementById("SPEED_MAX_ACCELERATIONInput")?.value || SPEED_MAX_ACCELERATION,
+            steerKP: 1,
+            steerKI: 0,
+            steerKD: 0,
+            STEER_MAX_INTEGRAL: 20,
         });
 
         sendCommand(data, log, true);
