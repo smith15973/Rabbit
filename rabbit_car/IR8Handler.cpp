@@ -19,7 +19,7 @@ int targetPosition = 3500; // Target position (middle of sensors)
 int error = 0;             // Current error (negative: line is left, positive: line is right)
 
 unsigned long lastReadTime = 0;
-const unsigned long READ_INTERVAL = 50; // Check sensors every 50ms for fast response
+const unsigned long READ_INTERVAL = 20; // Check sensors every 50ms for fast response
 
 float steerKP;
 float steerKI;
@@ -37,7 +37,7 @@ void ir8Setup()
   Serial.println("I2C Line sensor reader ready!");
 }
 
-void followLine()
+int followLine()
 {
   // Read sensors at the specified interval for optimal performance
   //   unsigned long currentTime = millis();
@@ -53,6 +53,7 @@ void followLine()
   // Determine direction to turn based on line position
   steer();
 
+  return error;
   // Uncomment for debugging
   // printIR8DebugInfo();
   //   }

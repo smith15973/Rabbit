@@ -120,14 +120,14 @@ void loop()
         // Use PID control for speed adjustment - run every 0.25 seconds for smoother transitions
         if (currentTime - lastSpeedUpdateTime >= s_to_micros(0.25))
         {
-          adjustMotorSpeedPID(currentSpeed, currentTargetSpeed);
+          // adjustMotorSpeedPID(currentSpeed, currentTargetSpeed);
           lastSpeedUpdateTime = currentTime;
         }
 
-        // followLine();
+        int steeringError = followLine();
         setSteering(SERVO_ANGLE);
         hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
-        bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed);
+        bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, steeringError);
       }
     }
     else

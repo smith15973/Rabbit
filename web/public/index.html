@@ -19,8 +19,86 @@
         <button id="connectBtn">Connect to ESP32</button>
         <button id="disconnectBtn" disabled>Disconnect</button>
 
-        <div class="controls" id="pacerDiv">
-            <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div id="pacerDiv" style="display: flex; gap: 20px; padding: 20px; font-family: Arial, sans-serif;">
+
+            <!-- Basic Parameters Section -->
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">Basic Parameters</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="distance" id="distanceInput" placeholder="Enter Distance" step="0.01"
+                        style="width: 120px;">
+                    <label for="distanceInput">Distance</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="time" id="timeInput" placeholder="Enter Time" step="0.01"
+                        style="width: 120px;">
+                    <label for="timeInput">Time</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="pace" id="paceInput" placeholder="Enter Pace" step="0.01"
+                        style="width: 120px;">
+                    <label for="paceInput">Pace</label>
+                </div>
+            </div>
+
+            <!-- Speed Control Section -->
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 250px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">Speed Control</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="speedKP" id="speedKPInput" placeholder="Enter Speed KP" step="0.001"
+                        value="10.000" style="width: 100px;">
+                    <label for="speedKPInput">Speed KP</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="speedKI" id="speedKIInput" placeholder="Enter Speed KI" step="0.001"
+                        value="0" style="width: 100px;">
+                    <label for="speedKIInput">Speed KI</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="speedKD" id="speedKDInput" placeholder="Enter Speed KD" step="0.001"
+                        value="3" style="width: 100px;">
+                    <label for="speedKDInput">Speed KD</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="SPEED_MAX_INTEGRAL" id="SPEED_MAX_INTEGRALInput"
+                        placeholder="Enter SPEED_MAX_INTEGRAL" step="0.001" value="200" style="width: 100px;">
+                    <label for="SPEED_MAX_INTEGRAL">Max Integral</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="SPEED_MAX_ACCELERATION" id="SPEED_MAX_ACCELERATIONInput"
+                        placeholder="Enter SPEED_MAX_ACCELERATION" step="0.001" value="50" style="width: 100px;">
+                    <label for="SPEED_MAX_ACCELERATION">Max Acceleration</label>
+                </div>
+            </div>
+
+            <!-- Steering Control Section -->
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 220px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">Steering Control</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="steerKP" id="steerKPInput" placeholder="Enter Steer KP" step="0.001"
+                        value="10.000" style="width: 100px;">
+                    <label for="steerKPInput">Steer KP</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="steerKI" id="steerKIInput" placeholder="Enter Steer KI" step="0.001"
+                        value="0" style="width: 100px;">
+                    <label for="steerKIInput">Steer KI</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="steerKD" id="steerKDInput" placeholder="Enter Steer KD" step="0.001"
+                        value="3" style="width: 100px;">
+                    <label for="steerKDInput">Steer KD</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" name="STEER_MAX_INTEGRAL" id="STEER_MAX_INTEGRALInput"
+                        placeholder="Enter STEER_MAX_INTEGRAL" step="0.001" value="200" style="width: 100px;">
+                    <label for="STEER_MAX_INTEGRAL">Max Integral</label>
+                </div>
+            </div>
+
+            <!-- Mode Selection Section -->
+            <div style="display: flex; flex-direction: column; gap: 4px; min-width: 300px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">Mode Selection</h3>
                 <div>
                     <input type="radio" name="mode" id="raceModeRadio" value="RACE" checked />
                     <label for="raceModeRadio">Race Pace Mode: Time + Distance → vary speed to hit exact finish
@@ -32,55 +110,24 @@
                 </div>
                 <div>
                     <input type="radio" name="mode" id="distanceModeRadio" value="DISTANCE_PACE" />
-                    <label for="distanceModeRadio">Distance Pace Mode: Speed + Distance → maintain constant speed until
-                        distance complete</label>
+                    <label for="distanceModeRadio">Distance Pace Mode: Speed + Distance → maintain constant speed
+                        until distance complete</label>
                 </div>
             </div>
 
-            <div style="display: flex;">
-                <input type="number" name="distance" id="distanceInput" placeholder="Enter Distance" step="0.01">
-                <label for="distance">Distance</label>
+            <!-- Options Section -->
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 150px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">Options</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="whiteLineToggle" />
+                    <label for="whiteLineToggle">Follow White Line</label>
+                </div>
             </div>
-            <div style="display: flex;">
-                <input type="number" name="time" id="timeInput" placeholder="Enter Time" step="0.01">
-                <label for="time">Time</label>
-            </div>
-            <div style="display: flex;">
-                <input type="number" name="pace" id="paceInput" placeholder="Enter Pace" step="0.01">
-                <label for="pace">Pace</label>
-            </div>
-
-            <div style="display: flex;">
-                <input type="number" name="speedKP" id="speedKPInput" placeholder="Enter Speed KP" step="0.001" value="10.000">
-                <label for="speedKPInput">Speed KP</label>
-            </div>
-            <div style="display: flex;">
-                <input type="number" name="speedKI" id="speedKIInput" placeholder="Enter Speed KI" step="0.001" value="0">
-                <label for="speedKIInput">Speed KI</label>
-            </div>
-            <div style="display: flex;">
-                <input type="number" name="speedKD" id="speedKDInput" placeholder="Enter Speed KD" step="0.001" value="3">
-                <label for="speedKDInput">Speed KD</label>
-            </div>
-            <div style="display: flex;">
-                <input type="number" name="SPEED_MAX_INTEGRAL" id="SPEED_MAX_INTEGRALInput" placeholder="Enter SPEED_MAX_INTEGRAL" step="0.001" value="200">
-                <label for="SPEED_MAX_INTEGRAL">SPEED_MAX_INTEGRAL</label>
-            </div>
-            <div style="display: flex;">
-                <input type="number" name="SPEED_MAX_ACCELERATION" id="SPEED_MAX_ACCELERATIONInput" placeholder="Enter SPEED_MAX_ACCELERATION" step="0.001" value="50">
-                <label for="SPEED_MAX_ACCELERATION">SPEED_MAX_ACCELERATION</label>
-            </div>
-            
-
-            <div style="display: flex;">
-                <input type="checkbox" id="whiteLineToggle" />
-                <label for="whiteLineToggle">Follow White Line</label>
-            </div>
-
-            <div id="currentTime">0.00</div>
-            <button id="startToggleButton">Go</button>
-
         </div>
+        <div id="currentTime">0.00</div>
+        <button id="startToggleButton">Go</button>
+
+
 
         <div class="metrics">
             <div class="metric-card">
@@ -108,54 +155,55 @@
             </div>
 
         </div>
+        <div style="display: flex; flex-direction: row; gap: 16px;">
+    <div style="flex: 1;">
         <div>
-            <h4>Speed Readings: </h4>
-            <div id="speedReadingsDisplay" style="display: flex; flex-wrap: wrap; max-width: 100%; max-height: 300px; overflow: auto; border: 1px solid #ccc; padding: 8px; border-radius: 6px; background: #fafbfc;"></div>
-
+            <h4>Speed Readings:</h4>
+            <div id="speedReadingsDisplay"
+                 style="display: flex; flex-wrap: wrap; max-width: 400px; max-height: 200px; overflow: auto; border: 1px solid #ccc; padding: 8px; border-radius: 6px; background: #fafbfc;">
             </div>
-            <canvas id="speedChart" width="800" height="400"></canvas>
         </div>
-
-        <div class="controls" id="controlsDiv">
-            <h2>RC-Style Controls</h2>
-            <p>Left stick controls forward/backward, right stick controls left/right</p>
-
-            <div class="visual-indicator">
-                <div class="indicator-crosshair"></div>
-                <div id="indicatorDot" class="indicator-dot"></div>
+        <canvas id="speedChart" width="400" height="200"></canvas>
+    </div>
+    <div style="flex: 1;">
+        <div>
+            <h4>Steer Readings:</h4>
+            <div id="steerReadingsDisplay"
+                 style="display: flex; flex-wrap: wrap; max-width: 400px; max-height: 200px; overflow: auto; border: 1px solid #ccc; padding: 8px; border-radius: 6px; background: #fafbfc;">
             </div>
+        </div>
+        <canvas id="steerChart" width="400" height="200"></canvas>
+    </div>
+</div>
+    </div>
 
-            <div class="sliders-row">
-                <div class="slider-container">
-                    <div class="slider-label">
-                        <div class="slider-value" id="yValue">1500</div>
-                    </div>
-                    <input type="range" min="1000" max="2000" value="1500" class="slider vertical" id="ySlider">
+    <div class="controls" id="controlsDiv">
+
+        <div class="sliders-row">
+            <div class="slider-container">
+                <div class="slider-label">
+                    <div class="slider-value" id="yValue">1500</div>
                 </div>
+                <input type="range" min="1000" max="2000" value="1500" class="slider vertical" id="ySlider">
+            </div>
 
-                <div class="slider-container">
-                    <div class="slider-label">
-                        <div class="slider-value" id="xValue">90</div>
-                    </div>
-                    <input type="range" min="45" max="135" value="90" class="slider horizontal" id="xSlider">
+            <div class="slider-container">
+                <div class="slider-label">
+                    <div class="slider-value" id="xValue">90</div>
                 </div>
-            </div>
-
-
-
-            <div class="control-info">
-                <p><small>Values are sent continuously as you move the sliders. Sliders return to center (0) when
-                        released.</small></p>
+                <input type="range" min="45" max="135" value="90" class="slider horizontal" id="xSlider">
             </div>
         </div>
 
-        <button id="manualToggle">Switch to Manual Control</button>
+    </div>
+
+    <button id="manualToggle">Switch to Manual Control</button>
 
 
-        <div class="log">
-            <h3>Event Log</h3>
-            <div id="logContent"></div>
-        </div>
+    <div class="log">
+        <h3>Event Log</h3>
+        <div id="logContent"></div>
+    </div>
     </div>
 
     <script type="module" src="javascripts/app.js"></script>

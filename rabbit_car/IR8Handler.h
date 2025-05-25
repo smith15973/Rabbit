@@ -8,7 +8,7 @@
 
 // Function prototypes
 void ir8Setup();
-void followLine();
+int followLine();
 void readSensorsI2C();
 void calculatePosition();
 void steer();

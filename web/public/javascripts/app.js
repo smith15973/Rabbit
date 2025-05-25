@@ -28,7 +28,9 @@ const distanceDisplay = document.getElementById('distance');
 const averagePaceDisplay = document.getElementById('average-pace');
 const timeDisplay = document.getElementById('time');
 const speedReadingsDisplay = document.getElementById('speedReadingsDisplay');
+const steerReadingsDisplay = document.getElementById('steerReadingsDisplay');
 let speedReadings = [];
+let steerReadings = [];
 
 const speedKP = 2.5;
 const speedKI = 0.55;
@@ -42,9 +44,20 @@ document.getElementById("speedKDInput").value = speedKD;
 document.getElementById("SPEED_MAX_INTEGRALInput").value = SPEED_MAX_INTEGRAL;
 document.getElementById("SPEED_MAX_ACCELERATIONInput").value = SPEED_MAX_ACCELERATION;
 
+const steerKP = 1;
+const steerKI = 0.0;
+const steerKD = 0.00;
+const STEER_MAX_INTEGRAL = 5000
 
-const ctx = document.getElementById('speedChart').getContext('2d');
-let speedChart = new Chart(ctx, {
+
+document.getElementById("steerKPInput").value = steerKP;
+document.getElementById("steerKIInput").value = steerKI;
+document.getElementById("steerKDInput").value = steerKD;
+document.getElementById("STEER_MAX_INTEGRALInput").value = STEER_MAX_INTEGRAL;
+
+
+const ctxSpeed = document.getElementById('speedChart').getContext('2d');
+let speedChart = new Chart(ctxSpeed, {
     type: 'line',
     data: {
         labels: [],
@@ -69,6 +82,38 @@ let speedChart = new Chart(ctx, {
                 title: {
                     display: true,
                     text: 'Speed'
+                }
+            }
+        }
+    }
+});
+
+const ctxSteer = document.getElementById('steerChart').getContext('2d');
+let steerChart = new Chart(ctxSteer, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Steer',
+            data: [],
+            borderColor: 'blue',
+            fill: false,
+            tension: 0.1,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Time (arbitrary units)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Steer'
                 }
             }
         }
@@ -156,6 +201,14 @@ export function updateDataState(newData) {
     if (newData.time && typeof newData.time.value === 'number' && newData.time.value >= 0) {
         elapsedTime.value = convertToSeconds(newData.time.value, newData.time.unit || "seconds");
         elapsedTime.unit = "seconds";
+    }
+    if (newData.steeringError && typeof newData.steeringError === 'number') {
+        steerReadings.push(currentSpeed.value)
+        steerReadingsDisplay.innerHTML = steerReadings;
+        // Update the chart
+        steerChart.data.labels = steerReadings.map((_, index) => index);
+        steerChart.data.datasets[0].data = steerReadings;
+        steerChart.update();
     }
     updateDataDisplay();
 }
@@ -423,6 +476,7 @@ startToggleButton.addEventListener('click', function () {
         running = !running;
         startToggleButton.innerText = running ? "STOP" : "GO";
         speedReadings = running ? [] : speedReadings
+        steerReadings = running ? [] : steerReadings
 
         const data = JSON.stringify({
             type: "running",
@@ -437,10 +491,10 @@ startToggleButton.addEventListener('click', function () {
             speedKD: document.getElementById("speedKIInput")?.value || speedKD,
             SPEED_MAX_INTEGRAL: document.getElementById("SPEED_MAX_INTEGRALInput")?.value || SPEED_MAX_INTEGRAL,
             SPEED_MAX_ACCELERATION: document.getElementById("SPEED_MAX_ACCELERATIONInput")?.value || SPEED_MAX_ACCELERATION,
-            steerKP: 1,
-            steerKI: 0,
-            steerKD: 0,
-            STEER_MAX_INTEGRAL: 20,
+            steerKP: document.getElementById("steerKPInput")?.value || steerKP,
+            steerKI: document.getElementById("steerKDInput")?.value || steerKI,
+            steerKD: document.getElementById("steerKIInput")?.value || steerKD,
+            STEER_MAX_INTEGRAL: document.getElementById("STEER_MAX_INTEGRALInput")?.value || STEER_MAX_INTEGRAL,
         });
 
         sendCommand(data, log, true);

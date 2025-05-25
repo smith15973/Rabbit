@@ -82,6 +82,11 @@ class MyCallbacks : public BLECharacteristicCallbacks
         steerKI = doc["steerKI"].as<float>();
         steerKD = doc["steerKD"].as<float>();
         STEER_MAX_INTEGRAL = doc["STEER_MAX_INTEGRAL"].as<float>();
+
+        steerKP = doc["steerKP"].as<float>();
+        steerKI = doc["steerKI"].as<float>();
+        steerKD = doc["steerKD"].as<float>();
+        STEER_MAX_INTEGRAL = doc["STEER_MAX_INTEGRAL"].as<float>();
         if (doc["running"])
         {
           startRunTimer = true;
@@ -148,7 +153,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
  * @param speed Speed value in meters per second
  * @return bool True if data was sent successfully, false otherwise
  */
-bool bleBroadcastDTPS(float distance, float time, float pace, float speed)
+bool bleBroadcastDTPS(float distance, float time, float pace, float speed, int steeringError)
 {
   // Check if 100ms has elapsed since the last broadcast
   static unsigned long lastBroadcastTime = 0;
@@ -182,6 +187,8 @@ bool bleBroadcastDTPS(float distance, float time, float pace, float speed)
   JsonObject timeObj = doc["time"].to<JsonObject>();
   timeObj["value"] = time;
   timeObj["units"] = "s";
+
+  doc["steeringError"] = steeringError;
 
   // Serialize JSON to string
   String jsonString;
