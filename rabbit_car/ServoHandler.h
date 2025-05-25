@@ -15,7 +15,7 @@ void setupServo();
  * @param steerValue Steering value from -100 (full left) to +100 (full right), 0 is center.
  * @return The actual pulse width sent to the servo in microseconds.
  */
-int setSteering(int steerValue);
+int setSteering(float steerValue);
 
 /**
  * Centers the steering servo (sets to neutral position).

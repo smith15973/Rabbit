@@ -12,6 +12,7 @@ int followLine();
 void readSensorsI2C();
 void calculatePosition();
 void steer();
+void steerByPID();
 void printIR8DebugInfo();
 int getLineError();
 bool isOnLine();

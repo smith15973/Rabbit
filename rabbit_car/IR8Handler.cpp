@@ -7,6 +7,7 @@
 // I2C address of the line patrol module
 const byte SENSOR_ADDR = 0x12; // Default address of the 8-channel line patrol module
 const byte SENSOR_REG = 0x30;  // Register to read sensor values from
+const float MAX_STEERING_ANGLE = 45;
 
 // Variables for line following
 int sensorValues[8];     // Array to store sensor readings
@@ -53,10 +54,10 @@ int followLine()
   // Determine direction to turn based on line position
   steer();
 
-  return error;
   // Uncomment for debugging
-  // printIR8DebugInfo();
-  //   }
+  printIR8DebugInfo();
+
+  return error;
 }
 
 void readSensorsI2C()
@@ -91,9 +92,9 @@ void readSensorsI2C()
   // Adjust sensor values based on line color
   for (int i = 0; i < 8; i++)
   {
-    if (IS_WHITE_LINE)
+    if (!IS_WHITE_LINE)
     {
-      // For white line, invert the sensor value (0 means line detected)
+      // For black line, invert the sensor value (1 means line detected)
       sensorValues[i] = !sensorValues[i];
     }
     // Check if any sensor detects the line
@@ -120,7 +121,7 @@ void calculatePosition()
   }
 
   // If we found the line, calculate position
-  if (sum > 0)
+  if (onLine)
   {
     linePosition = weightedSum / sum;
     lastPosition = linePosition;
@@ -139,7 +140,7 @@ void calculatePosition()
 
 void steer()
 {
-  int steeringAngle;
+  float steeringAngle;
 
   // If we've lost the line completely
   if (!onLine)
@@ -147,13 +148,13 @@ void steer()
     if (lastPosition < targetPosition)
     {
       // Line was on the left, turn sharply left
-      steeringAngle = 45; // Maximum left turn
+      steeringAngle = 90 - MAX_STEERING_ANGLE; // Maximum left turn
       // Serial.println("ACTION: TURN LEFT SHARP - Line lost, last position left");
     }
     else
     {
       // Line was on the right, turn sharply right
-      steeringAngle = 135; // Maximum right turn
+      steeringAngle = 90 + MAX_STEERING_ANGLE; // Maximum right turn
       // Serial.println("ACTION: TURN RIGHT SHARP - Line lost, last position right");
     }
   }
@@ -169,33 +170,30 @@ void steer()
     if (absError < 1000)
     {
       // Small error - gentle steering
-      gain = 0.03;
+      gain = 0.01;
     }
     else if (absError < 2500)
     {
       // Medium error - moderate steering
-      gain = 0.02;
+      gain = 0.003;
     }
     else
     {
       // Large error - aggressive steering
-      gain = 0.01;
+      gain = 0.005;
     }
 
     // Calculate steering angle
-    steeringAngle = 90 + (error * gain);
-
-    // Debug output
-    // Serial.print("ACTION: STEER - Error: ");
-    // Serial.print(error);
-    // Serial.print(" | Gain: ");
-    // Serial.print(gain, 3);
-    // Serial.print(" | Angle: ");
-    // Serial.println(steeringAngle);
+    steeringAngle = 90 - (error * gain);
   }
 
   // Set the servo value
   SERVO_ANGLE = steeringAngle;
+}
+
+void steerByPID(float currentAngle, targetAngle)
+{
+
 }
 
 void printIR8DebugInfo()

@@ -17,7 +17,6 @@ const ySlider = document.getElementById('ySlider');
 const xValue = document.getElementById('xValue');
 const yValue = document.getElementById('yValue');
 const manualToggle = document.getElementById('manualToggle');
-const indicatorDot = document.getElementById('indicatorDot');
 const startToggleButton = document.getElementById('startToggleButton');
 const whiteLineToggle = document.getElementById('whiteLineToggle');
 const distanceInput = document.getElementById("distanceInput");
@@ -270,20 +269,12 @@ function requestMovementUpdate() {
     }
 }
 
-// Update visual indicator
-function updateIndicator() {
-    const dotX = ((currentX + 45) / 90) * 100;
-    const dotY = ((100 - currentY) / 200) * 100;
-    indicatorDot.style.left = `${dotX}%`;
-    indicatorDot.style.top = `${dotY}%`;
-}
 
 // Reset X axis
 function resetXAxis() {
     xSlider.value = 90;
     currentX = 90;
     xValue.textContent = '90';
-    updateIndicator();
     requestMovementUpdate();
 }
 
@@ -292,7 +283,6 @@ function resetYAxis() {
     ySlider.value = 1500;
     currentY = 1500;
     yValue.textContent = currentY;
-    updateIndicator();
     requestMovementUpdate();
 }
 
@@ -436,14 +426,12 @@ disconnectBtn.addEventListener('click', handleDisconnect);
 xSlider.addEventListener('input', function () {
     currentX = parseInt(this.value);
     xValue.textContent = currentX;
-    updateIndicator();
     requestMovementUpdate();
 });
 
 ySlider.addEventListener('input', function () {
     currentY = parseInt(this.value);
     yValue.textContent = currentY;
-    updateIndicator();
     requestMovementUpdate();
 });
 

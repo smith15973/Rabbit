@@ -29,7 +29,7 @@ const int MAGNETS_COUNT = 8;   // the number of magnets spaced evenly on a wheel
 
 // external variables
 extern float MOTOR_SPEED;
-extern int SERVO_ANGLE;
+extern float SERVO_ANGLE;
 extern bool manualControl;
 extern bool RUNNING;
 extern bool startRunTimer;

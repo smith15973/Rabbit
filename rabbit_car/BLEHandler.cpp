@@ -56,7 +56,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
       {
         if (manualControl)
         {
-          SERVO_ANGLE = doc["angle"].as<int>();
+          SERVO_ANGLE = doc["angle"].as<float>();
           MOTOR_SPEED = doc["motorSpeed"].as<float>();
         }
       }
