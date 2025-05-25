@@ -57,7 +57,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         if (manualControl)
         {
           SERVO_ANGLE = doc["angle"].as<int>();
-          MOTOR_SPEED = doc["motorSpeed"].as<int>();
+          MOTOR_SPEED = doc["motorSpeed"].as<float>();
         }
       }
       else if (strcmp(dataType, "manualControl") == 0)
@@ -106,7 +106,6 @@ class MyCallbacks : public BLECharacteristicCallbacks
         if (doc.containsKey("pace") && !doc["pace"].as<String>().isEmpty())
         {
           targetSpeed = doc["pace"].as<float>();
-          MOTOR_SPEED = (int)targetSpeed;
           Serial.print("pace: ");
           Serial.println(targetSpeed);
         }
@@ -196,8 +195,8 @@ bool bleBroadcastDTPS(float distance, float time, float pace, float speed)
   lastBroadcastTime = millis();
 
   // Only print every 500ms to avoid flooding the serial console
-  Serial.print("Sent data: ");
-  Serial.println(jsonString);
+  // Serial.print("Sent data: ");
+  // Serial.println(jsonString);
 
   return true;
 }
@@ -251,6 +250,6 @@ void setupBLE()
 void stopESCOnDisconnect()
 {
   stopESC();
-  MOTOR_SPEED = 0; // Reset MOTOR_SPEED to neutral
+  MOTOR_SPEED = 1500; // Reset MOTOR_SPEED to neutral
   Serial.println("ESC stopped due to BLE disconnection");
 }

@@ -176,7 +176,7 @@ async function processCommandQueue(logCallback, manualControl, lastSentX, lastSe
             await characteristic.writeValue(data);
             updatedLastSentX = currentX;
             updatedLastSentY = currentY;
-            logCallback(`Sent movement: X:${currentX}, Y:${currentY}`);
+            logCallback(`Sent data ${movementData}`);
         }
     } catch (error) {
         logCallback(`Error sending data: ${error}`);

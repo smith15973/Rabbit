@@ -56,7 +56,7 @@ void hsUpdate(float *currentSpeed, float *averageSpeed, float *totalDistance)
     // Calculate current speed (m/s)
     float intervalSeconds = micros_to_s(currentTime - lastMeasurementTime);
     *currentSpeed = intervalDistance / intervalSeconds;
-    Serial.printf("Current Speed: %.2f\n", *currentSpeed);
+    // Serial.printf("Current Speed: %.2f\n", *currentSpeed);
 
     // Update running average speed
     float runTimeSeconds = micros_to_s(currentRunDuration);

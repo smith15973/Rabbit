@@ -11,7 +11,5 @@ void stopESC();
 void brakeESC();
 void resetPID();
 void adjustMotorSpeedPID(float currentSpeed, float targetSpeed);
-void increaseMotorSpeed();
-void decreaseMotorSpeed();
 
 #endif

@@ -44,21 +44,24 @@ void setupESC()
  */
 void setMotorSpeed(float speedValue)
 {
+    float MIN_VALUE = 1000.0;
+    float MID_VALUE = 1500.0;
+    float MAX_VALUE = 2000.0;
     // Ensure input is within valid range
-    speedValue = constrain((float)speedValue, -100, 100);
+    speedValue = constrain((float)speedValue, MIN_VALUE, MAX_VALUE);
 
     // Calculate the pulse width based on the speed value
     int pulseWidth;
 
-    if (speedValue < 0)
+    if (speedValue < MID_VALUE)
     {
         // Reverse speed (map -100-0 to ESC_MIN_PULSE_WIDTH-ESC_MID_PULSE_WIDTH)
-        pulseWidth = map(speedValue, -100, 0, ESC_MIN_PULSE_WIDTH, ESC_MID_PULSE_WIDTH);
+        pulseWidth = map(speedValue, MIN_VALUE, MID_VALUE, ESC_MIN_PULSE_WIDTH, ESC_MID_PULSE_WIDTH);
     }
-    else if (speedValue > 0)
+    else if (speedValue > MAX_VALUE)
     {
         // Forward speed (map 0-100 to ESC_MID_PULSE_WIDTH-ESC_MAX_PULSE_WIDTH)
-        pulseWidth = map(speedValue, 0, 100, ESC_MID_PULSE_WIDTH, ESC_MAX_PULSE_WIDTH);
+        pulseWidth = map(speedValue, MID_VALUE, MAX_VALUE, ESC_MID_PULSE_WIDTH, ESC_MAX_PULSE_WIDTH);
     }
     else
     {
@@ -67,13 +70,14 @@ void setMotorSpeed(float speedValue)
     }
 
     // Send the command to the ESC
-    ESC.writeMicroseconds(pulseWidth);
+    ESC.writeMicroseconds(speedValue);
+    // ESC.writeMicroseconds(pulseWidth);
 
     // Log the command (optional)
-    // Serial.print("Speed value: ");
-    // Serial.print(speedValue);
-    // Serial.print(" | Pulse width: ");
-    // Serial.println(pulseWidth);
+    Serial.print("Speed value: ");
+    Serial.print(speedValue);
+    Serial.print(" | Pulse width: ");
+    Serial.println(pulseWidth);
 }
 
 void stopESC()
@@ -126,17 +130,4 @@ void resetPID()
     currentPWM = ESC_MID_PULSE_WIDTH;  // Reset PWM to neutral
     ESC.writeMicroseconds(currentPWM); // Apply neutral position
     Serial.println("PID state reset");
-}
-
-// Legacy functions - can be removed or kept for compatibility
-void increaseMotorSpeed()
-{
-    MOTOR_SPEED = constrain(MOTOR_SPEED + 0.5, 1, 100);
-    setMotorSpeed(MOTOR_SPEED);
-}
-
-void decreaseMotorSpeed()
-{
-    MOTOR_SPEED = constrain(MOTOR_SPEED - 0.5, 1, 100);
-    setMotorSpeed(MOTOR_SPEED);
 }

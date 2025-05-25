@@ -9,7 +9,7 @@
 #include "conversions.h"
 
 // Define direction variables
-float MOTOR_SPEED = 0;
+float MOTOR_SPEED = 1500;
 int SERVO_ANGLE = 90;
 bool RUNNING = false;
 bool startRunTimer = true;

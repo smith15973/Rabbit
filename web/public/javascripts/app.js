@@ -94,7 +94,7 @@ let running = false;
 let isWhiteLine = false;
 let lastUpdated = ["distance", "time"];
 let currentX = 90;
-let currentY = 0;
+let currentY = 1500;
 let lastSentX = null;
 let lastSentY = null;
 let movementRequested = false;
@@ -236,9 +236,9 @@ function resetXAxis() {
 
 // Reset Y axis
 function resetYAxis() {
-    ySlider.value = 0;
-    currentY = 0;
-    yValue.textContent = '0';
+    ySlider.value = 1500;
+    currentY = 1500;
+    yValue.textContent = currentY;
     updateIndicator();
     requestMovementUpdate();
 }
