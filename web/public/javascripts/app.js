@@ -182,7 +182,7 @@ export function updateDataState(newData) {
         currentSpeed.value = convertToMperS(newData.currentSpeed.value, newData.currentSpeed.unit || "m/s");
         currentSpeed.unit = "m/s";
         speedReadings.push(currentSpeed.value)
-        speedReadingsDisplay.innerHTML = speedReadings;
+        speedReadingsDisplay.innerHTML = [...speedReadings].reverse();
 
         // Update the chart
         speedChart.data.labels = speedReadings.map((_, index) => index);
@@ -201,9 +201,9 @@ export function updateDataState(newData) {
         elapsedTime.value = convertToSeconds(newData.time.value, newData.time.unit || "seconds");
         elapsedTime.unit = "seconds";
     }
-    if (newData.steeringError && typeof newData.steeringError === 'number') {
-        steerReadings.push(currentSpeed.value)
-        steerReadingsDisplay.innerHTML = steerReadings;
+    if (newData.steeringAngle && typeof newData.steeringAngle === 'number') {
+        steerReadings.push(newData.steeringAngle)
+        steerReadingsDisplay.innerHTML = [...steerReadings].reverse();
         // Update the chart
         steerChart.data.labels = steerReadings.map((_, index) => index);
         steerChart.data.datasets[0].data = steerReadings;
@@ -214,7 +214,10 @@ export function updateDataState(newData) {
 
 // Update display elements with BLE data
 function updateDataDisplay() {
-    currentSpeedDisplay.textContent = currentSpeed.value.toFixed(2);
+    currentSpeedDisplay.innerHTML = 
+        `${currentSpeed.value.toFixed(2)} m/s<br>` +
+        `${mps_to_miph(currentSpeed.value).toFixed(2)} mph<br>` +
+        `${mps_to_kmh(currentSpeed.value).toFixed(2)} kmh<br>`;
     distanceDisplay.textContent = receivedDistance.value.toFixed(2);
     averagePaceDisplay.textContent = averagePace.value.toFixed(2);
     timeDisplay.textContent = elapsedTime.value.toFixed(2);
@@ -256,6 +259,17 @@ function convertToMperS(speed, units) {
             return speed;
     }
 }
+
+
+function mps_to_kmh(speed) {
+    return speed * 3.6;
+}
+function mps_to_miph(speed) {
+    return speed * 2.23694;
+}
+
+
+
 
 // Request movement update
 function requestMovementUpdate() {
@@ -472,7 +486,7 @@ startToggleButton.addEventListener('click', function () {
             distance: distanceInput.value,
             time: timeInput.value,
             pace: paceInput.value,
-            isWhiteLine: isWhiteLine,
+            isWhiteLine:whiteLineToggle.checked,
             mode: document.querySelector('input[name="mode"]:checked')?.value,
             speedKP: document.getElementById("speedKPInput")?.value || speedKP,
             speedKI: document.getElementById("speedKDInput")?.value || speedKI,

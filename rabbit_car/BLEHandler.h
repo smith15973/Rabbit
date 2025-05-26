@@ -15,6 +15,6 @@
 
 void setupBLE();
 void stopESCOnDisconnect();
-bool bleBroadcastDTPS(float distance, float time, float pace, float speed, int steeringError = 0);
+bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float steeringAngle = 0);
 
 #endif

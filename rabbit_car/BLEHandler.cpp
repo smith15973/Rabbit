@@ -153,7 +153,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
  * @param speed Speed value in meters per second
  * @return bool True if data was sent successfully, false otherwise
  */
-bool bleBroadcastDTPS(float distance, float time, float pace, float speed, int steeringError)
+bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float steeringAngle)
 {
   // Check if 100ms has elapsed since the last broadcast
   static unsigned long lastBroadcastTime = 0;
@@ -188,7 +188,7 @@ bool bleBroadcastDTPS(float distance, float time, float pace, float speed, int s
   timeObj["value"] = time;
   timeObj["units"] = "s";
 
-  doc["steeringError"] = steeringError;
+  doc["steeringAngle"] = steeringAngle;
 
   // Serialize JSON to string
   String jsonString;

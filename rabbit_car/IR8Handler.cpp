@@ -7,7 +7,8 @@
 // I2C address of the line patrol module
 const byte SENSOR_ADDR = 0x12; // Default address of the 8-channel line patrol module
 const byte SENSOR_REG = 0x30;  // Register to read sensor values from
-const float MAX_STEERING_ANGLE = 45;
+const float NEUTRAL_STEERING_ANGLE = 93;
+const float MAX_STEERING_ANGLE = 14;
 
 // Variables for line following
 int sensorValues[8];     // Array to store sensor readings
@@ -22,10 +23,15 @@ int error = 0;             // Current error (negative: line is left, positive: l
 unsigned long lastReadTime = 0;
 const unsigned long READ_INTERVAL = 20; // Check sensors every 50ms for fast response
 
-float steerKP;
-float steerKI;
-float steerKD;
-float STEER_MAX_INTEGRAL;
+float steerKP = 0.05;
+float steerKI = 0.001;
+float steerKD = 0.02;
+float STEER_MAX_INTEGRAL = 1000;
+
+// PID state variables
+float previousSteeringError = 0;
+float steeringIntegral = 0;
+unsigned long lastPIDTime = 0;
 
 void ir8Setup()
 {
@@ -38,7 +44,7 @@ void ir8Setup()
   Serial.println("I2C Line sensor reader ready!");
 }
 
-int followLine()
+void followLine()
 {
   // Read sensors at the specified interval for optimal performance
   //   unsigned long currentTime = millis();
@@ -56,8 +62,6 @@ int followLine()
 
   // Uncomment for debugging
   printIR8DebugInfo();
-
-  return error;
 }
 
 void readSensorsI2C()
@@ -148,52 +152,204 @@ void steer()
     if (lastPosition < targetPosition)
     {
       // Line was on the left, turn sharply left
-      steeringAngle = 90 - MAX_STEERING_ANGLE; // Maximum left turn
+      steeringAngle = NEUTRAL_STEERING_ANGLE - MAX_STEERING_ANGLE; // Maximum left turn
       // Serial.println("ACTION: TURN LEFT SHARP - Line lost, last position left");
     }
     else
     {
       // Line was on the right, turn sharply right
-      steeringAngle = 90 + MAX_STEERING_ANGLE; // Maximum right turn
+      steeringAngle = NEUTRAL_STEERING_ANGLE + MAX_STEERING_ANGLE; // Maximum right turn
       // Serial.println("ACTION: TURN RIGHT SHARP - Line lost, last position right");
     }
   }
   else
   {
-    // Use non-linear gain for better control
-    // For small errors: gentle correction
-    // For large errors: more aggressive correction
-
-    float gain;
+    // Direct mapping of error to steering angle
     int absError = abs(error);
+    float steeringOffset;
 
-    if (absError < 1000)
+    if ((absError) <= 0)
     {
-      // Small error - gentle steering
-      gain = 0.01;
+      steeringOffset = 0;
+    }
+    else if (absError < 500)
+    {
+      // Medium error - moderate steering (±2 degrees at 2500 error)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(1.0/7.0) : -MAX_STEERING_ANGLE *(1.0/7.0);
+    }
+    else if (absError < 1000)
+    {
+      // Small error - gentle steering (±1 degree at 1000 error)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(2.0/7.0) : -MAX_STEERING_ANGLE *(2.0/7.0);
+    }
+    else if (absError < 1500)
+    {
+      // Medium error - moderate steering (±2 degrees at 2500 error)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(3.0/7.0) : -MAX_STEERING_ANGLE *(3.0/7.0);
+    }
+    else if (absError < 2000)
+    {
+      // Medium error - moderate steering (±2 degrees at 2500 error)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(4.0/7.0) : -MAX_STEERING_ANGLE *(4.0/7.0);
     }
     else if (absError < 2500)
     {
-      // Medium error - moderate steering
-      gain = 0.003;
+      // Medium error - moderate steering (±2 degrees at 2500 error)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(5.0/7.0) : -MAX_STEERING_ANGLE *(5.0/7.0);
+    }
+    else if (absError < 3000)
+    {
+      // Medium error - moderate steering (±2 degrees at 2500 error)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(6.0/7.0) : -MAX_STEERING_ANGLE *(6.0/7.0);
     }
     else
     {
-      // Large error - aggressive steering
-      gain = 0.005;
+      // Large error - aggressive steering (±3 degrees max)
+      steeringOffset = (error > 0) ? MAX_STEERING_ANGLE *(7.0/7.0) : -MAX_STEERING_ANGLE *(7.0/7.0);
     }
 
     // Calculate steering angle
-    steeringAngle = 90 - (error * gain);
+    steeringAngle = NEUTRAL_STEERING_ANGLE - steeringOffset;
   }
 
   // Set the servo value
   SERVO_ANGLE = steeringAngle;
 }
 
-void steerByPID(float currentAngle, targetAngle)
-{
+// void steer()
+// {
+//   float steeringAngle;
 
+//   // If we've lost the line completely
+//   if (!onLine)
+//   {
+//     if (lastPosition < targetPosition)
+//     {
+//       // Line was on the left, turn sharply left
+//       steeringAngle = NEUTRAL_STEERING_ANGLE - MAX_STEERING_ANGLE; // Maximum left turn
+//       // Serial.println("ACTION: TURN LEFT SHARP - Line lost, last position left");
+//     }
+//     else
+//     {
+//       // Line was on the right, turn sharply right
+//       steeringAngle = NEUTRAL_STEERING_ANGLE + MAX_STEERING_ANGLE; // Maximum right turn
+//       // Serial.println("ACTION: TURN RIGHT SHARP - Line lost, last position right");
+//     }
+//   }
+//   else
+//   {
+//     // Use non-linear gain for better control
+//     // For small errors: gentle correction
+//     // For large errors: more aggressive correction
+
+//     float gain;
+//     int absError = abs(error);
+
+//     if (absError < 1000)
+//     {
+//       // Small error - gentle steering
+//       gain = 0.05;
+//     }
+//     else if (absError < 2500)
+//     {
+//       // Medium error - moderate steering
+//       gain = 0.003;
+//     }
+//     else
+//     {
+//       // Large error - aggressive steering
+//       gain = 0.001;
+//     }
+
+//     // Calculate steering angle
+//     steeringAngle = NEUTRAL_STEERING_ANGLE - (error * gain);
+//   }
+
+//   // Set the servo value
+//   SERVO_ANGLE = steeringAngle;
+// }
+
+void steerByPID()
+{
+  unsigned long currentTime = micros();
+  float deltaTime = micros_to_s(currentTime - lastPIDTime);
+
+  // Don't run PID too frequently
+  if (deltaTime < 0.01)
+    return; // Minimum 10ms between PID calculations
+
+  float steeringAngle;
+
+  // If we've lost the line completely, use emergency steering
+  if (!onLine)
+  {
+    // Reset PID terms when line is lost
+    steeringIntegral = 0;
+    previousSteeringError = 0;
+
+    if (lastPosition < targetPosition)
+    {
+      steeringAngle = NEUTRAL_STEERING_ANGLE - MAX_STEERING_ANGLE; // Maximum left turn
+    }
+    else
+    {
+      steeringAngle = NEUTRAL_STEERING_ANGLE + MAX_STEERING_ANGLE; // Maximum right turn
+    }
+  }
+  else
+  {
+    // PID Control
+    float pidOutput = calculateSteeringPID(error, deltaTime);
+
+    // Convert PID output to steering angle
+    steeringAngle = NEUTRAL_STEERING_ANGLE - pidOutput; // NEUTRAL_STEERING_ANGLE is center, subtract for left/right
+
+    // Constrain to valid steering range
+    steeringAngle = constrain(steeringAngle, NEUTRAL_STEERING_ANGLE - MAX_STEERING_ANGLE, NEUTRAL_STEERING_ANGLE + MAX_STEERING_ANGLE);
+  }
+
+  // Set the servo angle
+  SERVO_ANGLE = steeringAngle;
+  lastPIDTime = currentTime;
+}
+
+float calculateSteeringPID(float currentError, float deltaTime)
+{
+  // Proportional term
+  float proportional = steerKP * currentError;
+
+  // Integral term (accumulated error over time)
+  steeringIntegral += currentError * deltaTime;
+  // Prevent steeringIntegral windup
+  steeringIntegral = constrain(steeringIntegral, -STEER_MAX_INTEGRAL, STEER_MAX_INTEGRAL);
+  float steeringIntegralTerm = steerKI * steeringIntegral;
+
+  // Derivative term (rate of change of error)
+  float derivative = 0;
+  if (deltaTime > 0)
+  {
+    derivative = (currentError - previousSteeringError) / deltaTime;
+  }
+  float derivativeTerm = steerKD * derivative;
+
+  // Calculate total PID output
+  float pidOutput = proportional + steeringIntegralTerm + derivativeTerm;
+
+  // Store current error for next iteration
+  previousSteeringError = currentError;
+
+  // Optional: Print PID debug info
+  // Serial.printf("P:%.2f I:%.2f D:%.2f Out:%.2f\n", proportional, steeringIntegralTerm, derivativeTerm, pidOutput);
+
+  return pidOutput;
+}
+
+// Add this function to reset PID when starting a new run
+void resetSteeringPID()
+{
+  steeringIntegral = 0;
+  previousSteeringError = 0;
+  lastPIDTime = micros();
 }
 
 void printIR8DebugInfo()

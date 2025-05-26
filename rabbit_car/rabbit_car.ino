@@ -57,13 +57,14 @@ void setup()
 
 void loop()
 {
-  if (BRAKE) {
+  if (BRAKE)
+  {
     brakeESC();
-    
   }
   if (startRunTimer)
   {
     resetPID();
+    resetSteeringPID();
     hsStart();
     startTime = micros();
     startRunTimer = false;
@@ -77,7 +78,7 @@ void loop()
     setMotorSpeed(MOTOR_SPEED);
     setSteering(SERVO_ANGLE);
     hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
-    bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed);
+    bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, SERVO_ANGLE);
   }
   else // pace mode
   {
@@ -120,14 +121,15 @@ void loop()
         // Use PID control for speed adjustment - run every 0.25 seconds for smoother transitions
         if (currentTime - lastSpeedUpdateTime >= s_to_micros(0.25))
         {
-          // adjustMotorSpeedPID(currentSpeed, currentTargetSpeed);
+          adjustMotorSpeedPID(currentSpeed, currentTargetSpeed);
           lastSpeedUpdateTime = currentTime;
         }
 
-        int steeringError = followLine();
+        followLine();
+        // steerByPID();
         setSteering(SERVO_ANGLE);
         hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
-        bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, steeringError);
+        bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, SERVO_ANGLE);
       }
     }
     else
@@ -137,14 +139,14 @@ void loop()
     }
   }
 
-  delay(10);
+  delay(5);
 }
 
 // RACE mode: Adjust pace dynamically to finish distance in target time
 bool checkRaceEndCondition()
 {
   // End when we've reached the target distance
-  return (totalDistance >= targetDistance) ;
+  return (totalDistance >= targetDistance);
 }
 
 float calculateRacePace()

@@ -36,27 +36,13 @@ void setupServo()
  * @param speedValue Speed from -100 (full reverse) to +100 (full forward), 0 is stop
  * @return The actual pulse width sent to the ESC in microseconds
  */
-int setSteering(float steeringValue)
+int setSteering(float angle)
 {
   // Ensure input is within valid range
-  steeringValue = constrain(steeringValue, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
-
-  // Map the steering value to the servo angle range
-  float angle;
-
-  if (steeringValue < 90)
-  {
-    // Left steering: map -100 to 0 to SERVO_MIN_ANGLE to 90°
-    angle = map(steeringValue, 45, 90, SERVO_MIN_ANGLE, 90);
-  }
-  else 
-  {
-    // Right steering: map 0 to 100 to 90° to SERVO_MAX_ANGLE
-    angle = map(steeringValue, 90, 135, 90, SERVO_MAX_ANGLE);
-  }
+  angle = constrain(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
 
   // Convert angle to pulse width
-  int pulseWidth = map(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+  int pulseWidth = map(angle, 0, 180, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
 
   // Send the command to the servo
   steeringServo.writeMicroseconds(pulseWidth);

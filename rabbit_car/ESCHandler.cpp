@@ -5,9 +5,9 @@ const int ESC_MID_PULSE_WIDTH = 1500; // Neutral position pulse width in microse
 const int ESC_MAX_PULSE_WIDTH = 2000; // Maximum pulse width in microseconds (full forward)
 
 // PID control constants
-float speedKP = 1;                   // Proportional gain - reduced to be less aggressive
-float speedKI = 0.00;                // Integral gain - reduced to be less aggressive
-float speedKD = 0.3;                 // Derivative gain
+float speedKP = 2.5;                   // Proportional gain - reduced to be less aggressive
+float speedKI = 0.55;                // Integral gain - reduced to be less aggressive
+float speedKD = 0.1;                 // Derivative gain
 float SPEED_MAX_INTEGRAL = 20.0;     // Maximum integral accumulation to prevent windup
 float SPEED_MAX_ACCELERATION = 20.0; // Maximum change in speed per update to prevent wheelies
 
