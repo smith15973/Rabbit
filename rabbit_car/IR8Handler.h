@@ -8,15 +8,10 @@
 
 // Function prototypes
 void ir8Setup();
-void followLine();
 void readSensorsI2C();
-void calculatePosition();
-void steer();
-void steerByPID();
-float calculateSteeringPID(float currentError, float deltaTime);
+int getPosition();
 void resetSteeringPID();
 void printIR8DebugInfo();
-int getLineError();
 bool isOnLine();
 
 #endif

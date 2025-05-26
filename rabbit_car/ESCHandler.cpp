@@ -119,8 +119,8 @@ void adjustMotorSpeedPID(float currentSpeed, float targetSpeed)
     previousError = error;
 
     // Debug output
-    Serial.printf("Target: %.2f, Current: %.2f, Error: %.2f, Adjustment: %.2f, PWM: %d\n",
-                  targetSpeed, currentSpeed, error, adjustment, currentPWM);
+    // Serial.printf("Target: %.2f, Current: %.2f, Error: %.2f, Adjustment: %.2f, PWM: %d\n",
+    //               targetSpeed, currentSpeed, error, adjustment, currentPWM);
 }
 
 void resetPID()

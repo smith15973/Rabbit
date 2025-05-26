@@ -125,9 +125,7 @@ void loop()
           lastSpeedUpdateTime = currentTime;
         }
 
-        followLine();
-        // steerByPID();
-        setSteering(SERVO_ANGLE);
+        steerServoByPID();
         hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
         bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, SERVO_ANGLE);
       }

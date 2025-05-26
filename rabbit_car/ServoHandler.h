@@ -3,23 +3,21 @@
 #define SERVO_HANDLER_H
 
 #include <ESP32Servo.h>
+#include "IR8Handler.h"
 #include "config.h"
 
-/**
- * Initializes the steering servo.
- */
 void setupServo();
 
-/**
- * Sets the steering angle based on an input value.
- * @param steerValue Steering value from -100 (full left) to +100 (full right), 0 is center.
- * @return The actual pulse width sent to the servo in microseconds.
- */
-int setSteering(float steerValue);
+int setSteering(float angle);
 
-/**
- * Centers the steering servo (sets to neutral position).
- */
 void centerSteering();
+
+void steerServoByPID();
+
+// Add this function to reset PID when starting a new run
+void resetSteeringPID();
+
+// Function to tune PID parameters during runtime
+void updateSteeringPIDConstants(float kp, float ki, float kd);
 
 #endif

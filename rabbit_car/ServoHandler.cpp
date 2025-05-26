@@ -1,13 +1,27 @@
 // ESCHandler.cpp
 #include "ServoHandler.h"
 
-const int SERVO_MIN_PULSE_WIDTH = 1000; // Minimum pulse width in microseconds (full reverse)
-const int SERVO_MID_PULSE_WIDTH = 1500; // Neutral position pulse width in microseconds
-const int SERVO_MAX_PULSE_WIDTH = 2000; // Maximum pulse width in microseconds (full forward)
+const int SERVO_MIN_PULSE_WIDTH = 1240; // Minimum pulse width in microseconds (full reverse)
+const int SERVO_MID_PULSE_WIDTH = 1495; // Neutral position pulse width in microseconds
+const int SERVO_MAX_PULSE_WIDTH = 1750; // Maximum pulse width in microseconds (full forward)
 const int SERVO_MIN_ANGLE = 45;         // Minimum steering angle (left, in degrees)
+const int SERVO_MID_ANGLE = 90;         // Minimum steering angle (left, in degrees)
 const int SERVO_MAX_ANGLE = 135;        // Maximum steering angle (right, in degrees)
+const int VALID_TURNING_RANGE = 45;
 
-// Create a servo object to control the ESC
+float steerKP = 0.05;
+float steerKI = 0.001;
+float steerKD = 0.02;
+float STEER_MAX_INTEGRAL = 5000;
+
+// PID Variables
+int steeringSetPoint = 3500; // Target position (center of 0-7000 range)
+int steeringError = 0;
+int previousSteeringError = 0;
+float steeringIntegral = 0;
+unsigned long lastSteeringPIDTime = 0;
+
+// Create a servo object to control the servo
 Servo steeringServo;
 
 void setupServo()
@@ -18,8 +32,7 @@ void setupServo()
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
 
-  // Initialize ESC
-  steeringServo.setPeriodHertz(50); // Standard 50Hz servo frequency
+  // Initialize SERVO
   steeringServo.attach(SERVO_PIN, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
 
   // Set to neutral position on startup
@@ -29,24 +42,16 @@ void setupServo()
   Serial.println("Steering servo initialized. Ready to receive steering commands.");
 }
 
-/**
- * Alternative function that takes a -100 to +100 value instead
- * Negative values are reverse, positive values are forward
- *
- * @param speedValue Speed from -100 (full reverse) to +100 (full forward), 0 is stop
- * @return The actual pulse width sent to the ESC in microseconds
- */
 int setSteering(float angle)
 {
   // Ensure input is within valid range
   angle = constrain(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
 
   // Convert angle to pulse width
-  int pulseWidth = map(angle, 0, 180, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+  int pulseWidth = map(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
 
   // Send the command to the servo
   steeringServo.writeMicroseconds(pulseWidth);
-  
 
   // Log the command
   // Serial.print("Steering value: ");
@@ -62,4 +67,99 @@ int setSteering(float angle)
 void centerSteering()
 {
   steeringServo.writeMicroseconds(SERVO_MID_PULSE_WIDTH); // Set to center
+}
+
+void steerServoByPID()
+{
+  readSensorsI2C();
+  int position = getPosition();
+
+  if (!isOnLine())
+  // search algorithm
+  {
+    if (previousSteeringError < 0)
+    {
+      // turn left, line is left
+      setSteering(SERVO_MIN_ANGLE);
+    }
+    else
+    {
+      // turn right, line is right
+      setSteering(SERVO_MAX_ANGLE);
+    }
+
+    return;
+  }
+
+  // Calculate time delta for derivative and integral
+  unsigned long currentTime = micros();
+  float deltaTime = micros_to_s(currentTime - lastSteeringPIDTime); // Convert to seconds
+  lastSteeringPIDTime = currentTime;
+
+  // Calculate error (how far we are from center)
+  steeringError = position - steeringSetPoint; // negative: line is left, positive: line is right
+
+  // Proportional term
+  float proportional = steerKP * steeringError;
+
+  // Integral term (accumulated error over time)
+  steeringIntegral += steeringError * deltaTime;
+  // Prevent integral windup
+  steeringIntegral = constrain(steeringIntegral, -STEER_MAX_INTEGRAL, STEER_MAX_INTEGRAL);
+  float integral = steerKI * steeringIntegral;
+
+  // Derivative term (rate of change of error)
+  float derivative = 0;
+  if (deltaTime > 0)
+  {
+    derivative = steerKD * (steeringError - previousSteeringError) / deltaTime;
+  }
+
+  // Calculate PID output
+  float pidOutput = proportional + integral + derivative;
+
+  // Convert PID output to steering angle
+  // The PID output will be in position units (-3500 to +3500 roughly)
+  // Map this to steering angle range
+  float steeringAngle = map(pidOutput, -3500, 3500, SERVO_MID_ANGLE - VALID_TURNING_RANGE, SERVO_MID_ANGLE + VALID_TURNING_RANGE);
+
+  // Apply steering
+  SERVO_ANGLE = steeringAngle;
+  setSteering(steeringAngle);
+
+  // Store error for next iteration
+  previousSteeringError = steeringError;
+
+  // Debug output (uncomment if needed)
+
+  Serial.print("Pos: ");
+  Serial.print(position);
+  Serial.print(" | Error: ");
+  Serial.print(steeringError);
+  Serial.print(" | P: ");
+  Serial.print(proportional);
+  Serial.print(" | I: ");
+  Serial.print(integral);
+  Serial.print(" | D: ");
+  Serial.print(derivative);
+  Serial.print(" | PID: ");
+  Serial.print(pidOutput);
+  Serial.print(" | Angle: ");
+  Serial.println(steeringAngle);
+}
+
+// Add this function to reset PID when starting a new run
+void resetSteeringPID()
+{
+  steeringIntegral = 0;
+  previousSteeringError = 0;
+  lastSteeringPIDTime = micros();
+}
+
+// Function to tune PID parameters during runtime
+void updateSteeringPIDConstants(float kp, float ki, float kd)
+{
+  steerKP = kp;
+  steerKI = ki;
+  steerKD = kd;
 }
