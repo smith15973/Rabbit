@@ -176,6 +176,11 @@ async function handleDisconnect() {
     elapsedTime.value = 0.0;
 }
 
+export function handleRunStopped(data) {
+    running = false;
+    startToggleButton.innerText = "GO";
+}
+
 // Update BLE-received data state
 export function updateDataState(newData) {
     if (newData.currentSpeed && typeof newData.currentSpeed.value === 'number' && newData.currentSpeed.value >= 0) {
@@ -214,12 +219,20 @@ export function updateDataState(newData) {
 
 // Update display elements with BLE data
 function updateDataDisplay() {
-    currentSpeedDisplay.innerHTML = 
+    currentSpeedDisplay.innerHTML =
         `${currentSpeed.value.toFixed(2)} m/s<br>` +
         `${mps_to_miph(currentSpeed.value).toFixed(2)} mph<br>` +
         `${mps_to_kmh(currentSpeed.value).toFixed(2)} kmh<br>`;
     distanceDisplay.textContent = receivedDistance.value.toFixed(2);
-    averagePaceDisplay.textContent = averagePace.value.toFixed(2);
+    distanceDisplay.innerHTML =
+        `${receivedDistance.value.toFixed(2)} m<br>` +
+        `${m_to_ft(receivedDistance.value).toFixed(2)} ft<br>` +
+        `${m_to_mi(receivedDistance.value).toFixed(2)} miles<br>` +
+        `${m_to_km(receivedDistance.value).toFixed(2)} km<br>`;
+    averagePaceDisplay.innerHTML =
+        `${averagePace.value.toFixed(2)} m/s<br>` +
+        `${mps_to_miph(averagePace.value).toFixed(2)} mph<br>` +
+        `${mps_to_kmh(averagePace.value).toFixed(2)} kmh<br>`;
     timeDisplay.textContent = elapsedTime.value.toFixed(2);
 }
 
@@ -268,6 +281,15 @@ function mps_to_miph(speed) {
     return speed * 2.23694;
 }
 
+function m_to_km(meters) {
+    return meters / 1000;
+}
+function m_to_mi(meters) {
+    return meters / 1609.34;
+}
+function m_to_ft(meters) {
+    return meters * 3.28084;
+}
 
 
 
@@ -486,7 +508,7 @@ startToggleButton.addEventListener('click', function () {
             distance: distanceInput.value,
             time: timeInput.value,
             pace: paceInput.value,
-            isWhiteLine:whiteLineToggle.checked,
+            isWhiteLine: whiteLineToggle.checked,
             mode: document.querySelector('input[name="mode"]:checked')?.value,
             speedKP: document.getElementById("speedKPInput")?.value || speedKP,
             speedKI: document.getElementById("speedKDInput")?.value || speedKI,

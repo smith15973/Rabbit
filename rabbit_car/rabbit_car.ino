@@ -107,6 +107,10 @@ void loop()
         currentTargetSpeed = targetSpeed;
       }
 
+      steerServoByPID();
+      hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
+      bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, SERVO_ANGLE, shouldEnd);
+
       if (shouldEnd)
       {
         stopESC();
@@ -115,6 +119,10 @@ void loop()
         startRunTimer = false;
         endTime = currentTime;
         printRunSummary();
+
+        DynamicJsonDocument doc(32);
+        doc["stopped"] = true;
+        bleBroadcastRunStopped(doc);
       }
       else
       {
@@ -124,10 +132,6 @@ void loop()
           adjustMotorSpeedPID(currentSpeed, currentTargetSpeed);
           lastSpeedUpdateTime = currentTime;
         }
-
-        steerServoByPID();
-        hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
-        bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, SERVO_ANGLE);
       }
     }
     else

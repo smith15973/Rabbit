@@ -3,6 +3,7 @@
 #define CONFIG_H
 
 #include "Conversions.h"
+#include <ArduinoJson.h>
 
 // BLE UUIDs - MUST match the ones in the web app
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"

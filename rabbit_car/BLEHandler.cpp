@@ -90,7 +90,9 @@ class MyCallbacks : public BLECharacteristicCallbacks
         if (doc["running"])
         {
           startRunTimer = true;
-        } else {
+        }
+        else
+        {
           BRAKE = true;
         }
         RUNNING = doc["running"];
@@ -153,11 +155,11 @@ class MyCallbacks : public BLECharacteristicCallbacks
  * @param speed Speed value in meters per second
  * @return bool True if data was sent successfully, false otherwise
  */
-bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float steeringAngle)
+bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float steeringAngle, bool forceBroadcast)
 {
   // Check if 100ms has elapsed since the last broadcast
   static unsigned long lastBroadcastTime = 0;
-  if (millis() - lastBroadcastTime < 100)
+  if (millis() - lastBroadcastTime < 100 && !forceBroadcast)
   {
     return false; // Exit early if it's too soon to broadcast
   }
@@ -204,6 +206,23 @@ bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float
   // Only print every 500ms to avoid flooding the serial console
   // Serial.print("Sent data: ");
   // Serial.println(jsonString);
+
+  return true;
+}
+
+bool bleBroadcastRunStopped(const JsonDocument& doc)
+{
+  if (!deviceConnected)
+  {
+    return false;
+  }
+  // Serialize JSON to string
+  String jsonString;
+  serializeJson(doc, jsonString);
+
+  // Send the value to the app
+  pDataCharacteristic->setValue(jsonString.c_str());
+  pDataCharacteristic->notify();
 
   return true;
 }

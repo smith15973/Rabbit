@@ -13,7 +13,7 @@ let pendingOperation = false;  // Tracks if any command is in flight
 let commandQueue = [];  // Queue for critical commands
 
 // Import state update function
-import { updateDataState, log } from './app.js';
+import { updateDataState, log, handleRunStopped } from './app.js';
 
 // Connect to BLE device
 async function connect(logCallback) {
@@ -188,12 +188,12 @@ async function processCommandQueue(logCallback, manualControl, lastSentX, lastSe
             (manualControl && (updatedLastSentX !== currentX || updatedLastSentY !== currentY || updatedMovementRequested))) {
             // Schedule next operation after a small delay
             setTimeout(() => processCommandQueue(
-                logCallback, 
-                manualControl, 
-                updatedLastSentX, 
-                updatedLastSentY, 
-                currentX, 
-                currentY, 
+                logCallback,
+                manualControl,
+                updatedLastSentX,
+                updatedLastSentY,
+                currentX,
+                currentY,
                 updatedMovementRequested
             ), 10);
         }
@@ -225,7 +225,11 @@ function handleDataReceived(event) {
 
     try {
         const data = JSON.parse(jsonString);
-        updateDataState(data); // Update app state
+        if (data.stopped) {
+            handleRunStopped(data);
+        } else {
+            updateDataState(data); // Update app state
+        }
         log(`Received data: ${jsonString}`);
     } catch (error) {
         console.error('Error parsing JSON data:', error);

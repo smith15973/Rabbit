@@ -15,6 +15,7 @@
 
 void setupBLE();
 void stopESCOnDisconnect();
-bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float steeringAngle = 0);
+bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float steeringAngle, bool forceBroadcast = 0);
+bool bleBroadcastRunStopped(const JsonDocument&);
 
 #endif
