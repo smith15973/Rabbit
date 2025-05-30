@@ -114,7 +114,7 @@ void loop()
       if (shouldEnd)
       {
         stopESC();
-        centerSteering();
+        // centerSteering();
         RUNNING = false;
         startRunTimer = false;
         endTime = currentTime;
@@ -123,6 +123,11 @@ void loop()
         DynamicJsonDocument doc(32);
         doc["stopped"] = true;
         bleBroadcastRunStopped(doc);
+
+        for (int i = 0; i < 600; i++) {
+          steerServoByPID();
+          delay(5);
+        }
       }
       else
       {
@@ -137,7 +142,8 @@ void loop()
     else
     {
       stopESC();
-      centerSteering();
+      // centerSteering();
+      steerServoByPID();
     }
   }
 

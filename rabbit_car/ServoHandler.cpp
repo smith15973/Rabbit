@@ -1,13 +1,13 @@
 // ESCHandler.cpp
 #include "ServoHandler.h"
 
-const int SERVO_MIN_PULSE_WIDTH = 1240; // Minimum pulse width in microseconds (full reverse)
-const int SERVO_MID_PULSE_WIDTH = 1495; // Neutral position pulse width in microseconds
+const int SERVO_MIN_PULSE_WIDTH = 1250; // Minimum pulse width in microseconds (full reverse)
+const int SERVO_MID_PULSE_WIDTH = 1500; // Neutral position pulse width in microseconds
 const int SERVO_MAX_PULSE_WIDTH = 1750; // Maximum pulse width in microseconds (full forward)
-const int SERVO_MIN_ANGLE = 45;         // Minimum steering angle (left, in degrees)
-const int SERVO_MID_ANGLE = 90;         // Minimum steering angle (left, in degrees)
-const int SERVO_MAX_ANGLE = 135;        // Maximum steering angle (right, in degrees)
-const int VALID_TURNING_RANGE = 45;
+const float SERVO_MIN_ANGLE = 45;       // Minimum steering angle (left, in degrees)
+const float SERVO_MID_ANGLE = 90;       // Minimum steering angle (left, in degrees)
+const float SERVO_MAX_ANGLE = 135;      // Maximum steering angle (right, in degrees)
+const float VALID_TURNING_RANGE = 7;
 
 float steerKP = 0.05;
 float steerKI = 0.001;
@@ -42,24 +42,46 @@ void setupServo()
   Serial.println("Steering servo initialized. Ready to receive steering commands.");
 }
 
+// int setSteering(float angle)
+// {
+//   // Ensure input is within valid range
+//   angle = constrain(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
+
+//   // Convert angle to pulse width
+//   int pulseWidth = map(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+
+//   // Send the command to the servo
+//   steeringServo.writeMicroseconds(pulseWidth);
+
+//   // Log the command
+//   // Serial.print("Steering value: ");
+//   // Serial.print(steeringValue);
+//   // Serial.print(" | Angle: ");
+//   // Serial.print(angle);
+//   // Serial.print(" | Pulse width: ");
+//   // Serial.println(pulseWidth);
+
+//   return pulseWidth;
+// }
 int setSteering(float angle)
 {
   // Ensure input is within valid range
   angle = constrain(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
 
-  // Convert angle to pulse width
-  int pulseWidth = map(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+  // Convert angle to pulse width using floating-point interpolation
+  float pulseWidthFloat = mapFloat(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE_WIDTH, SERVO_MAX_PULSE_WIDTH);
+
+  // Round to nearest integer for pulse width (servo needs integer microseconds)
+  int pulseWidth = (int)(pulseWidthFloat + 0.5);
 
   // Send the command to the servo
   steeringServo.writeMicroseconds(pulseWidth);
 
-  // Log the command
-  // Serial.print("Steering value: ");
-  // Serial.print(steeringValue);
-  // Serial.print(" | Angle: ");
-  // Serial.print(angle);
-  // Serial.print(" | Pulse width: ");
-  // Serial.println(pulseWidth);
+  // Log the command (uncommented for debugging precision)
+  Serial.print("Steering angle: ");
+  Serial.print(angle, 1); // Print with 1 decimal place
+  Serial.print("° | Pulse width: ");
+  Serial.println(pulseWidth);
 
   return pulseWidth;
 }
@@ -74,22 +96,22 @@ void steerServoByPID()
   readSensorsI2C();
   int position = getPosition();
 
-  if (!isOnLine())
-  // search algorithm
-  {
-    if (previousSteeringError < 0)
-    {
-      // turn left, line is left
-      setSteering(SERVO_MIN_ANGLE);
-    }
-    else
-    {
-      // turn right, line is right
-      setSteering(SERVO_MAX_ANGLE);
-    }
+  // if (!isOnLine())
+  // // search algorithm
+  // {
+  //   if (previousSteeringError < 0)
+  //   {
+  //     // turn left, line is left
+  //     setSteering(SERVO_MID_ANGLE - VALID_TURNING_RANGE);
+  //   }
+  //   else
+  //   {
+  //     // turn right, line is right
+  //     setSteering(SERVO_MID_ANGLE + VALID_TURNING_RANGE);
+  //   }
 
-    return;
-  }
+  //   return;
+  // }
 
   // Calculate time delta for derivative and integral
   unsigned long currentTime = micros();
@@ -98,6 +120,10 @@ void steerServoByPID()
 
   // Calculate error (how far we are from center)
   steeringError = position - steeringSetPoint; // negative: line is left, positive: line is right
+  if (steeringError <= 500 && steeringError >= -500)
+  {
+    steeringError = 0;
+  }
 
   // Proportional term
   float proportional = steerKP * steeringError;
@@ -121,7 +147,8 @@ void steerServoByPID()
   // Convert PID output to steering angle
   // The PID output will be in position units (-3500 to +3500 roughly)
   // Map this to steering angle range
-  float steeringAngle = map(pidOutput, -3500, 3500, SERVO_MID_ANGLE - VALID_TURNING_RANGE, SERVO_MID_ANGLE + VALID_TURNING_RANGE);
+  float steeringAngle = mapFloat(pidOutput, -3500, 3500, SERVO_MID_ANGLE - VALID_TURNING_RANGE, SERVO_MID_ANGLE + VALID_TURNING_RANGE + 5.0);
+  steeringAngle = constrain(steeringAngle, SERVO_MID_ANGLE - VALID_TURNING_RANGE, SERVO_MID_ANGLE + VALID_TURNING_RANGE + 5.0);
 
   // Apply steering
   SERVO_ANGLE = steeringAngle;

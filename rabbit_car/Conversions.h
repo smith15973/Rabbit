@@ -82,4 +82,5 @@ float mmss_to_s(int minutes, float seconds);
 
 float mmss_to_s(int minutes, int seconds);
 
+float mapFloat(float value, float fromLow, float fromHigh, float toLow, float toHigh);
 #endif

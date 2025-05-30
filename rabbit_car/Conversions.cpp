@@ -237,3 +237,7 @@ float mmss_to_s(int minutes, int seconds)
 {
     return minutes * 60.0 + seconds;
 }
+
+float mapFloat(float value, float fromLow, float fromHigh, float toLow, float toHigh) {
+  return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow;
+}

@@ -43,9 +43,9 @@ document.getElementById("speedKDInput").value = speedKD;
 document.getElementById("SPEED_MAX_INTEGRALInput").value = SPEED_MAX_INTEGRAL;
 document.getElementById("SPEED_MAX_ACCELERATIONInput").value = SPEED_MAX_ACCELERATION;
 
-const steerKP = 0.05;
-const steerKI = 0.001;
-const steerKD = 0.02;
+const steerKP = 1;
+const steerKI = 1;
+const steerKD = 0.25;
 const STEER_MAX_INTEGRAL = 5000
 
 
