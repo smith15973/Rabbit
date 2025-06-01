@@ -15,7 +15,7 @@ float steerKD = 0.02;
 float STEER_MAX_INTEGRAL = 5000;
 
 // PID Variables
-int steeringSetPoint = 3500; // Target position (center of 0-7000 range)
+int steeringSetPoint = 7500; // Target position (center of 0-7000 range)
 int steeringError = 0;
 int previousSteeringError = 0;
 float steeringIntegral = 0;
@@ -93,7 +93,7 @@ void centerSteering()
 
 void steerServoByPID()
 {
-  readSensorsI2C();
+  readIRSensorsI2C();
   int position = getPosition();
 
   // if (!isOnLine())

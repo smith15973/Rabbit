@@ -2,7 +2,7 @@
 #include "BLEHandler.h"
 #include "ESCHandler.h"
 #include "ServoHandler.h"
-#include "IR8Handler.h"
+#include "IRHandler.h"
 #include "HSHandler.h"
 #include "Lights.h"
 #include "config.h"
@@ -47,8 +47,8 @@ void setup()
   setupServo();
   // Initialize HS
   setupHS();
-  // Initialize IR8 line sensor
-  ir8Setup();
+  // Initialize IR line sensor
+  irSetup();
   // Initialize BLE
   setupBLE();
   // Initialize Lights
@@ -124,7 +124,8 @@ void loop()
         doc["stopped"] = true;
         bleBroadcastRunStopped(doc);
 
-        for (int i = 0; i < 600; i++) {
+        for (int i = 0; i < 600; i++)
+        {
           steerServoByPID();
           delay(5);
         }

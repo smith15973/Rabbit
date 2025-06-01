@@ -1,4 +1,4 @@
-// IR8Handler.h
+// IRHandler.h
 #ifndef LIGHTS_H
 #define LIGHTS_H
 

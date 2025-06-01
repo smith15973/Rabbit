@@ -3,7 +3,7 @@
 #define SERVO_HANDLER_H
 
 #include <ESP32Servo.h>
-#include "IR8Handler.h"
+#include "IRHandler.h"
 #include "config.h"
 
 void setupServo();

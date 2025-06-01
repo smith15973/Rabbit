@@ -1,17 +1,17 @@
-// IR8Handler.h
-#ifndef IR8_HANDLER_H
-#define IR8_HANDLER_H
+// irHandler.h
+#ifndef IR_HANDLER_H
+#define IR_HANDLER_H
 
 #include <Wire.h>
 #include <arduino.h>
 #include "config.h"
 
 // Function prototypes
-void ir8Setup();
-void readSensorsI2C();
+void irSetup();
+void readIRSensorsI2C();
 int getPosition();
 void resetSteeringPID();
-void printIR8DebugInfo();
+void printIRDebugInfo();
 bool isOnLine();
 
 #endif

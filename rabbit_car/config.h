@@ -20,10 +20,11 @@
 #define LEFT_LIGHT_PIN 13
 #define RIGHT_LIGHT_PIN 14
 
-#define IR_SDA_PIN 21
-#define IR_SCL_PIN 22
+#define IR1_SDA_PIN 16
+#define IR1_SCL_PIN 17
+#define IR2_SDA_PIN 21
+#define IR2_SCL_PIN 22
 #define IR_KEY_PIN 18
-#define IR_RESET_PIN 19
 
 const int WHEEL_DIAMETER = 82; // wheel diameter in mm
 const int MAGNETS_COUNT = 8;   // the number of magnets spaced evenly on a wheel
