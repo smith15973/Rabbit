@@ -10,6 +10,8 @@
 void irSetup();
 void readIRSensorsI2C();
 int getPosition();
+int getFilteredPosition();
+bool isValidLinePattern();
 void resetSteeringPID();
 void printIRDebugInfo();
 bool isOnLine();

@@ -94,6 +94,7 @@ void centerSteering()
 void steerServoByPID()
 {
   readIRSensorsI2C();
+  printIRDebugInfo();
   int position = getPosition();
 
   // if (!isOnLine())
@@ -159,20 +160,20 @@ void steerServoByPID()
 
   // Debug output (uncomment if needed)
 
-  Serial.print("Pos: ");
-  Serial.print(position);
-  Serial.print(" | Error: ");
-  Serial.print(steeringError);
-  Serial.print(" | P: ");
-  Serial.print(proportional);
-  Serial.print(" | I: ");
-  Serial.print(integral);
-  Serial.print(" | D: ");
-  Serial.print(derivative);
-  Serial.print(" | PID: ");
-  Serial.print(pidOutput);
-  Serial.print(" | Angle: ");
-  Serial.println(steeringAngle);
+  // Serial.print("Pos: ");
+  // Serial.print(position);
+  // Serial.print(" | Error: ");
+  // Serial.print(steeringError);
+  // Serial.print(" | P: ");
+  // Serial.print(proportional);
+  // Serial.print(" | I: ");
+  // Serial.print(integral);
+  // Serial.print(" | D: ");
+  // Serial.print(derivative);
+  // Serial.print(" | PID: ");
+  // Serial.print(pidOutput);
+  // Serial.print(" | Angle: ");
+  // Serial.println(steeringAngle);
 }
 
 // Add this function to reset PID when starting a new run

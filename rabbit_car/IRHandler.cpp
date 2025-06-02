@@ -13,6 +13,12 @@ const byte SENSOR_REG = 0x30;  // Register to read sensor values from
 int sensorValues[IR_SENSOR_COUNT]; // Array to store sensor readings
 int linePosition = 0;              // Position of the line (0-7000)
 
+// Add these variables to your IRHandler
+int previousValidPosition = 7500; // Last known good position
+int positionChangeThreshold = 2500; // Maximum reasonable position change per cycle
+int consecutiveValidReadings = 0;
+int minConsecutiveReadings = 0; // Require X consecutive similar readings
+
 void irSetup()
 {
   // Initialize I2C communication
@@ -81,6 +87,55 @@ int getPosition()
   }
 
   return linePosition;
+}
+
+int getFilteredPosition() {
+    int rawPosition = getPosition();
+    int positionChange = abs(rawPosition - previousValidPosition);
+    bool validPattern = isValidLinePattern();
+    
+    // Accept if BOTH conditions are met:
+    // 1. Position change is reasonable
+    // 2. Sensor pattern looks like a normal line
+    if (positionChange < positionChangeThreshold && validPattern) {
+        previousValidPosition = rawPosition;
+        return rawPosition;
+    } else {
+        Serial.print("REJECTED - Change: ");
+        Serial.print(positionChange);
+        Serial.print(" | Valid pattern: ");
+        Serial.println(validPattern);
+        return previousValidPosition;
+    }
+}
+
+bool isValidLinePattern() {
+    int activeSensors = 0;
+    int firstActive = -1, lastActive = -1;
+    
+    for (int i = 0; i < IR_SENSOR_COUNT; i++) {
+        if (sensorValues[i] == 1) {
+            activeSensors++;
+            if (firstActive == -1) firstActive = i;
+            lastActive = i;
+        }
+    }
+    
+    int lineWidth = lastActive - firstActive + 1;
+    
+    // Normal line: 3-7 active sensors, width 3-7
+    // Triangle/marking: 8+ active sensors, width 8+
+    bool normalWidth = (activeSensors >= 2 && activeSensors <= 8);
+    bool normalSpan = (lineWidth >= 2 && lineWidth <= 8);
+    
+    Serial.print("Active sensors: ");
+    Serial.print(activeSensors);
+    Serial.print(" | Line width: ");
+    Serial.print(lineWidth);
+    Serial.print(" | Valid: ");
+    Serial.println(normalWidth && normalSpan);
+    
+    return normalWidth && normalSpan;
 }
 
 void printIRDebugInfo()
