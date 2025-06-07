@@ -90,49 +90,48 @@ void loop()
       // Mode-specific logic
       if (MODE == "RACE")
       {
-        // RACE mode: Time + Distance → vary speed to hit exact finish time
         shouldEnd = checkRaceEndCondition();
         currentTargetSpeed = calculateRacePace();
       }
       else if (MODE == "TEMPO")
       {
-        // TEMPO mode: Speed + Time → maintain constant speed
         shouldEnd = checkTempoEndCondition();
         currentTargetSpeed = targetSpeed;
       }
       else if (MODE == "DISTANCE_PACE")
       {
-        // DISTANCE_PACE mode: Speed + Distance → maintain constant speed until distance complete
         shouldEnd = checkDistancePaceEndCondition();
         currentTargetSpeed = targetSpeed;
       }
 
-      steerServoByPID();
+      // IMPORTANT: Pass current speed to steering function for adaptive control
+      steerServoByPID(currentSpeed);
       hsUpdate(&currentSpeed, &averageSpeed, &totalDistance);
       bleBroadcastDTPS(totalDistance, micros_to_s(currentRunDuration), averageSpeed, currentSpeed, SERVO_ANGLE, shouldEnd);
 
       if (shouldEnd)
       {
         stopESC();
-        // centerSteering();
         RUNNING = false;
         startRunTimer = false;
         endTime = currentTime;
         printRunSummary();
+        printCalibrationStatus(); // Print final calibration status
 
         DynamicJsonDocument doc(32);
         doc["stopped"] = true;
         bleBroadcastRunStopped(doc);
 
+        // Continue steering for a few seconds to finish the line following
         for (int i = 0; i < 600; i++)
         {
-          steerServoByPID();
+          steerServoByPID(0.5); // Low speed steering for final positioning
           delay(5);
         }
       }
       else
       {
-        // Use PID control for speed adjustment - run every 0.25 seconds for smoother transitions
+        // Use PID control for speed adjustment
         if (currentTime - lastSpeedUpdateTime >= s_to_micros(0.25))
         {
           adjustMotorSpeedPID(currentSpeed, currentTargetSpeed);
@@ -143,8 +142,7 @@ void loop()
     else
     {
       stopESC();
-      // centerSteering();
-      steerServoByPID();
+      // steerServoByPID(0.0); // Steering still active when stopped
     }
   }
 

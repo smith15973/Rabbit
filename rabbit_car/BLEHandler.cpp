@@ -78,15 +78,11 @@ class MyCallbacks : public BLECharacteristicCallbacks
         SPEED_MAX_INTEGRAL = doc["SPEED_MAX_INTEGRAL"].as<float>();
         SPEED_MAX_ACCELERATION = doc["SPEED_MAX_ACCELERATION"].as<float>();
 
-        steerKP = doc["steerKP"].as<float>();
-        steerKI = doc["steerKI"].as<float>();
-        steerKD = doc["steerKD"].as<float>();
-        STEER_MAX_INTEGRAL = doc["STEER_MAX_INTEGRAL"].as<float>();
+        // steerKP = doc["steerKP"].as<float>();
+        // steerKI = doc["steerKI"].as<float>();
+        // steerKD = doc["steerKD"].as<float>();
+        // STEER_MAX_INTEGRAL = doc["STEER_MAX_INTEGRAL"].as<float>();
 
-        steerKP = doc["steerKP"].as<float>();
-        steerKI = doc["steerKI"].as<float>();
-        steerKD = doc["steerKD"].as<float>();
-        STEER_MAX_INTEGRAL = doc["STEER_MAX_INTEGRAL"].as<float>();
         if (doc["running"])
         {
           startRunTimer = true;
@@ -210,7 +206,59 @@ bool bleBroadcastDTPS(float distance, float time, float pace, float speed, float
   return true;
 }
 
-bool bleBroadcastRunStopped(const JsonDocument& doc)
+bool bleBroadcastPID(float kp, float ki, float kd, int speedBand, float currentSpeed, bool forceBroadcast)
+{
+  // Check if values actually changed or force broadcast
+  static float lastKP = -1, lastKI = -1, lastKD = -1;
+  static int lastSpeedBand = -1;
+
+  if (!forceBroadcast && kp == lastKP && ki == lastKI && kd == lastKD && speedBand == lastSpeedBand)
+  {
+    return false; // No change, don't broadcast
+  }
+
+  if (!deviceConnected)
+  {
+    return false;
+  }
+
+  // Create a JSON document for PID data
+  StaticJsonDocument<250> doc;
+
+  JsonObject pidObj = doc["pidValues"].to<JsonObject>();
+  pidObj["kp"] = kp;
+  pidObj["ki"] = ki;
+  pidObj["kd"] = kd;
+
+  JsonObject speedObj = doc["currentSpeed"].to<JsonObject>();
+  speedObj["value"] = currentSpeed;
+  speedObj["units"] = "mps";
+
+  doc["speedBand"] = speedBand;
+  doc["timestamp"] = millis();
+  doc["type"] = "pid_update";
+
+  // Serialize JSON to string
+  String jsonString;
+  serializeJson(doc, jsonString);
+
+  // Send the value to the app (you may need a separate characteristic for PID data)
+  pDataCharacteristic->setValue(jsonString.c_str());
+  pDataCharacteristic->notify();
+
+  // Update last values
+  lastKP = kp;
+  lastKI = ki;
+  lastKD = kd;
+  lastSpeedBand = speedBand;
+
+  Serial.print("PID Update Sent: ");
+  Serial.println(jsonString);
+
+  return true;
+}
+
+bool bleBroadcastRunStopped(const JsonDocument &doc)
 {
   if (!deviceConnected)
   {
